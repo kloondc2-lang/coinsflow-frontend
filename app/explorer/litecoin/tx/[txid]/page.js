@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchTx } from '../../../../lib/api';
 
-/* â”€â”€â”€ Utility components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* --- Utility components -------------------------------------------------- */
 
 function Skeleton({ className = '' }) {
   return <span className={`inline-block rounded bg-gray-200 dark:bg-[#0e2444] animate-pulse ${className}`} />;
@@ -38,7 +38,7 @@ function InfoRow({ label, children, value }) {
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 py-3.5 border-b border-gray-100 dark:border-[#0a1a30] last:border-b-0">
       <span className="text-[12px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500 sm:w-52 shrink-0 pt-0.5">{label}</span>
       <div className="text-[14px] font-bold text-gray-800 dark:text-gray-100 break-all flex items-center gap-1 flex-wrap min-w-0">
-        {children ?? value ?? 'â€”'}
+        {children ?? value ?? '—'}
       </div>
     </div>
   );
@@ -55,12 +55,12 @@ function StatCard({ label, value, sub, highlight }) {
 }
 
 const fmt8 = (n) =>
-  n != null ? n.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 }) : 'â€”';
+  n != null ? n.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 }) : '—';
 
 const fmtUsd = (n) =>
   n != null ? `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
 
-/* â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* --- Page ---------------------------------------------------------------- */
 
 export default function TxDetail() {
   const { txid } = useParams();
@@ -124,7 +124,7 @@ export default function TxDetail() {
         </div>
       )}
 
-      {/* â”€â”€ Stat strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* -- Stat strip ------------------------------------------------------ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {loading ? (
           Array.from({ length: 4 }, (_, i) => (
@@ -147,7 +147,7 @@ export default function TxDetail() {
             />
             <StatCard
               label="Fee"
-              value={isCoinbase ? 'â€” (Block Reward)' : `${fmt8(data?.fee_ltc)} LTC`}
+              value={isCoinbase ? '— (Block Reward)' : `${fmt8(data?.fee_ltc)} LTC`}
               sub={(!isCoinbase && data?.fee_usd) ? fmtUsd(data.fee_usd) : ''}
             />
             <StatCard
@@ -159,7 +159,7 @@ export default function TxDetail() {
         )}
       </div>
 
-      {/* â”€â”€ Details table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* -- Details table --------------------------------------------------- */}
       {(loading || data) && (
         <div className="rounded-2xl border border-gray-100 dark:border-[#0e2444] bg-white dark:bg-[#060f1e] px-6 mb-6">
           <div className="py-3.5 border-b border-gray-100 dark:border-[#0a1a30]">
@@ -176,8 +176,8 @@ export default function TxDetail() {
             <>
               <InfoRow label="Status">
                 {isConfirmed
-                  ? <span className="text-green-600 dark:text-green-400 font-extrabold text-[14px]">âœ“ Confirmed</span>
-                  : <span className="text-amber-500 font-extrabold text-[14px]">â³ Pending</span>}
+                  ? <span className="text-green-600 dark:text-green-400 font-extrabold text-[14px]">✓ Confirmed</span>
+                  : <span className="text-amber-500 font-extrabold text-[14px]">Pending</span>}
               </InfoRow>
 
               <InfoRow label="TXID">
@@ -205,13 +205,13 @@ export default function TxDetail() {
               </InfoRow>
 
               <InfoRow label="Date / Time"
-                value={data?.time_human ? `${data.time_human} (${data.time_ago})` : 'â€”'} />
+              value={data?.time_human ? `${data.time_human} (${data.time_ago})` : '—'} />
 
               <InfoRow label="Confirmations"
                 value={(data?.confirmations ?? 0).toLocaleString()} />
 
               <InfoRow label="Size"
-                value={data?.size != null ? `${data.size.toLocaleString()} bytes` : 'â€”'} />
+              value={data?.size != null ? `${data.size.toLocaleString()} bytes` : '—'} />
 
               <InfoRow label="Total Input"
                 value={isCoinbase ? 'Coinbase (block reward)' : `${fmt8(data?.total_input_ltc)} LTC`} />
@@ -221,21 +221,21 @@ export default function TxDetail() {
 
               <InfoRow label="Fee">
                 {isCoinbase
-                  ? <span className="text-gray-400 font-bold">â€” (no fee for block rewards)</span>
+                  ? <span className="text-gray-400 font-bold">— (no fee for block rewards)</span>
                   : `${fmt8(data?.fee_ltc)} LTC${data?.fee_usd ? ` (${fmtUsd(data.fee_usd)})` : ''}`}
               </InfoRow>
 
               <InfoRow label="Fee per Byte">
                 {data?.fee_per_byte != null
                   ? `${data.fee_per_byte} sat/byte`
-                  : <span className="text-gray-400">â€”</span>}
+                  : <span className="text-gray-400">—</span>}
               </InfoRow>
 
               <InfoRow label="Value (USD)"
-                value={fmtUsd(data?.amount_usd) || 'â€”'} />
+                value={fmtUsd(data?.amount_usd) || '—'} />
 
               <InfoRow label="LTC Price"
-                value={data?.ltc_price_usd ? `$${data.ltc_price_usd.toFixed(2)}` : 'â€”'} />
+              value={data?.ltc_price_usd ? `$${data.ltc_price_usd.toFixed(2)}` : '—'} />
 
               <InfoRow label="Type"
                 value={isCoinbase ? 'Coinbase (Block Reward)' : 'Transfer'} />
@@ -244,7 +244,7 @@ export default function TxDetail() {
         </div>
       )}
 
-      {/* â”€â”€ Inputs / Outputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* -- Inputs / Outputs ------------------------------------------------ */}
       {(loading || data) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -275,7 +275,7 @@ export default function TxDetail() {
                           {inp.label === 'Block Reward' ? (
                             <div className="flex items-center gap-2">
                               <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[13px] font-extrabold">
-                                â› Block Reward
+                                 Block Reward
                               </span>
                             </div>
                           ) : (

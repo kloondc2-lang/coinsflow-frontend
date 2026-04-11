@@ -50,7 +50,7 @@ export default function AddressDetail() {
   };
 
   const txs = data?.transactions ?? [];
-  const hasMore = data?.total_txs != null && txs.length < data.total_txs;
+  const hasMore = data?.tx_count != null && txs.length < data.tx_count;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 pb-16">
@@ -80,18 +80,18 @@ export default function AddressDetail() {
         {[
           {
             label: 'Confirmed Balance',
-            value: loading ? null : `${data?.confirmed_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC`,
-            sub: loading ? null : `$${data?.confirmed_usd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`,
+            value: loading ? null : `${data?.balance_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC`,
+            sub: loading ? null : `$${data?.balance_usd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`,
             highlight: true,
           },
           {
             label: 'Unconfirmed Balance',
             value: loading ? null : `${data?.unconfirmed_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC`,
-            sub: loading ? null : `$${data?.unconfirmed_usd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`,
+            sub: loading ? null : `$${(data?.unconfirmed_ltc * (data?.ltc_price_usd ?? 0))?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`,
           },
           {
             label: 'Total Transactions',
-            value: loading ? null : data?.total_txs?.toLocaleString(),
+            value: loading ? null : data?.tx_count?.toLocaleString(),
           },
         ].map((card, i) => (
           <div key={i} className={`rounded-2xl border p-5 ${card.highlight ? 'border-blue-200 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-900/10' : 'border-gray-100 dark:border-[#0e2444]'}`}>
@@ -110,7 +110,7 @@ export default function AddressDetail() {
 
       {/* Transaction history */}
       <h2 className="text-[15px] font-extrabold text-gray-700 dark:text-gray-300 mb-3">
-        Transaction History{!loading && data?.total_txs != null && <span className="text-gray-400 font-bold ml-1">({data.total_txs.toLocaleString()})</span>}
+        Transaction History{!loading && data?.tx_count != null && <span className="text-gray-400 font-bold ml-1">({data.tx_count.toLocaleString()})</span>}
       </h2>
       <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-[#0e2444]">
         <table className="w-full text-[13px]">

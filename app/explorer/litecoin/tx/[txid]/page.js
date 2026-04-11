@@ -176,7 +176,7 @@ export default function TxDetail() {
             <>
               <InfoRow label="Status">
                 {isConfirmed
-                  ? <span className="text-green-600 dark:text-green-400 font-extrabold text-[14px]">✓ Confirmed</span>
+                  ? <span className="text-green-600 dark:text-green-400 font-extrabold text-[14px]">Confirmed</span>
                   : <span className="text-amber-500 font-extrabold text-[14px]">Pending</span>}
               </InfoRow>
 

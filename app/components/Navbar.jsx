@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTheme } from './ThemeProvider';
 
 const chains = [
   { name: 'Litecoin', ticker: 'LTC', href: '/explorer/litecoin', icon: '/ltc.svg', desc: 'Scrypt PoW · 2.5 min blocks' },
@@ -29,42 +28,6 @@ function ChevronDown() {
   );
 }
 
-function ThemeToggle() {
-  const { dark, toggle } = useTheme();
-  return (
-    <button
-      onClick={toggle}
-      aria-label="Toggle dark mode"
-      className={`relative w-11 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${
-        dark ? 'bg-gray-600' : 'bg-gray-300'
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform duration-300 ${
-          dark ? 'translate-x-5' : 'translate-x-0'
-        }`}
-      >
-        {dark ? (
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="#4b5563">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        ) : (
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="4" fill="#f59e0b" stroke="none" />
-            <line x1="12" y1="2" x2="12" y2="4" />
-            <line x1="12" y1="20" x2="12" y2="22" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="2" y1="12" x2="4" y2="12" />
-            <line x1="20" y1="12" x2="22" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-        )}
-      </span>
-    </button>
-  );
-}
 
 export default function Navbar() {
   const [open, setOpen] = useState(null);
@@ -143,9 +106,8 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right side: toggle + mobile hamburger */}
+        {/* Right side: mobile hamburger */}
         <div className="ml-auto flex items-center gap-3">
-          <ThemeToggle />
 
           {/* Mobile hamburger */}
           <button

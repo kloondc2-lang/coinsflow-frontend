@@ -1,35 +1,18 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
-const ThemeContext = createContext({ dark: false, toggle: () => {} });
+const ThemeContext = createContext({ dark: true });
 export const useTheme = () => useContext(ThemeContext);
 
 export default function ThemeProvider({ children }) {
-  const [dark, setDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
-    const saved = localStorage.getItem('cfTheme') === 'dark';
-    setDark(saved);
-    document.documentElement.classList.toggle('dark', saved);
-    setMounted(true);
+    document.documentElement.classList.add('dark');
+    localStorage.removeItem('cfTheme');
   }, []);
 
-  function toggle() {
-    setDark((prev) => {
-      const next = !prev;
-      localStorage.setItem('cfTheme', next ? 'dark' : 'light');
-      document.documentElement.classList.toggle('dark', next);
-      return next;
-    });
-  }
-
-  // Prevent flash: render children only after mount
-  if (!mounted) return <>{children}</>;
-
   return (
-    <ThemeContext.Provider value={{ dark, toggle }}>
+    <ThemeContext.Provider value={{ dark: true }}>
       {children}
     </ThemeContext.Provider>
   );

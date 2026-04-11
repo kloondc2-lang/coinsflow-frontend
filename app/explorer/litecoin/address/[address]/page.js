@@ -261,13 +261,21 @@ export default function AddressDetail() {
 
                           {/* Fee */}
                           <td className="px-4 py-3">
-                            <div className="text-gray-700 dark:text-gray-300">
-                              {(tx.fee_ltc ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 8 })}
-                            </div>
-                            {(tx.fee_ltc ?? 0) > 0 && (data?.ltc_price_usd ?? 0) > 0 && (
-                              <div className="text-[11px] text-gray-400">
-                                ${((tx.fee_ltc ?? 0) * (data?.ltc_price_usd ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} USD
-                              </div>
+                            {tx.fee_ltc == null ? (
+                              <span className="text-gray-400 text-[12px]">—</span>
+                            ) : tx.fee_ltc === 0 ? (
+                              <span className="text-gray-400 text-[12px]">{tx.is_coinbase ? '— (coinbase)' : '0'}</span>
+                            ) : (
+                              <>
+                                <div className="text-gray-700 dark:text-gray-300">
+                                  {tx.fee_ltc.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 8 })} LTC
+                                </div>
+                                {tx.fee_usd != null && tx.fee_usd > 0 && (
+                                  <div className="text-[11px] text-gray-400">
+                                    ${tx.fee_usd.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} USD
+                                  </div>
+                                )}
+                              </>
                             )}
                           </td>
 
@@ -297,7 +305,11 @@ export default function AddressDetail() {
                                   </div>
                                   <div>
                                     <span className="text-gray-400">Fee: </span>
-                                    <span className="font-bold text-gray-800 dark:text-gray-200">{(tx.fee_ltc ?? 0).toLocaleString(undefined, { maximumFractionDigits: 8 })} LTC</span>
+                                    <span className="font-bold text-gray-800 dark:text-gray-200">
+                                      {tx.fee_ltc == null
+                                        ? '—'
+                                        : `${tx.fee_ltc.toLocaleString(undefined, { maximumFractionDigits: 8 })} LTC`}
+                                    </span>
                                   </div>
                                 </div>
                                 <div className="ml-auto">

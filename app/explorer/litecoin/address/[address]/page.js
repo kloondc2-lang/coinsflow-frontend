@@ -77,6 +77,7 @@ export default function AddressDetail() {
   const [error, setError]         = useState(null);
   const [page, setPage]           = useState(1);
   const [expandedRows, setExpanded] = useState(new Set());
+  const [tab, setTab]             = useState('confirmed');
   const LIMIT = 20;
 
   const loadPage = useCallback((p) => {
@@ -93,6 +94,10 @@ export default function AddressDetail() {
   const historyLimited = data?.history_limited === true;
   const totalPages = data ? Math.max(1, Math.ceil(((data.pagination?.total ?? data.tx_count) || 0) / LIMIT)) : 1;
   const txs = data?.transactions ?? [];
+
+  const confirmedTxs   = txs.filter(tx => tx.block_height != null && tx.block_height > 0);
+  const unconfirmedTxs = txs.filter(tx => tx.block_height == null || tx.block_height === 0);
+  const filteredTxs    = tab === 'confirmed' ? confirmedTxs : unconfirmedTxs;
 
   const toggleRow = (txid) => {
     setExpanded(prev => {
@@ -116,10 +121,24 @@ export default function AddressDetail() {
       {/* Address header */}
       <div className="rounded-xl border border-gray-200 dark:border-[#0e2444] mb-5 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a]">
-          <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Address</div>
-          <div className="flex items-center flex-wrap gap-1">
-            <span className="font-mono text-[14px] sm:text-[15px] font-bold text-gray-900 dark:text-white break-all">{address}</span>
-            <CopyBtn text={address} />
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Address</div>
+              <div className="flex items-center flex-wrap gap-1">
+                <span className="font-mono text-[14px] sm:text-[15px] font-bold text-gray-900 dark:text-white break-all">{address}</span>
+                <CopyBtn text={address} />
+              </div>
+            </div>
+            {/* QR Code */}
+            <div className="flex-shrink-0">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(address)}&bgcolor=transparent&color=9ca3af&format=svg`}
+                alt="QR Code"
+                width={80}
+                height={80}
+                className="rounded-lg border border-gray-100 dark:border-[#0e2444] bg-white p-1"
+              />
+            </div>
           </div>
         </div>
 
@@ -177,13 +196,38 @@ export default function AddressDetail() {
 
       {/* Transactions table */}
       <div className="rounded-xl border border-gray-200 dark:border-[#0e2444] overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a] flex items-center justify-between">
-          <h2 className="text-[13px] font-bold text-gray-600 dark:text-gray-400">
-            {historyLimited ? 'Recent UTXO Activity' : 'Confirmed Transactions'}
-            {!loading && data?.tx_count != null && (
-              <span className="ml-2 text-gray-400 font-normal">({data.tx_count.toLocaleString()} total)</span>
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a] flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-1">
+            {historyLimited ? (
+              <h2 className="text-[13px] font-bold text-gray-600 dark:text-gray-400">Recent UTXO Activity</h2>
+            ) : (
+              <>
+                <button
+                  onClick={() => setTab('confirmed')}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors ${
+                    tab === 'confirmed'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0a1a30]'
+                  }`}
+                >
+                  Confirmed{!loading ? ` (${confirmedTxs.length})` : ''}
+                </button>
+                <button
+                  onClick={() => setTab('unconfirmed')}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors ${
+                    tab === 'unconfirmed'
+                      ? 'bg-amber-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#0a1a30]'
+                  }`}
+                >
+                  Unconfirmed{!loading ? ` (${unconfirmedTxs.length})` : ''}
+                </button>
+              </>
             )}
-          </h2>
+            {!loading && data?.tx_count != null && (
+              <span className="ml-2 text-[12px] text-gray-400 font-normal">({data.tx_count.toLocaleString()} total)</span>
+            )}
+          </div>
           {!loading && totalPages > 1 && (
             <span className="text-[12px] text-gray-400">Page {page} / {totalPages}</span>
           )}
@@ -211,11 +255,18 @@ export default function AddressDetail() {
                       <td className="px-2 py-3"><Skeleton className="h-4 w-4" /></td>
                     </tr>
                   ))
-                : txs.map((tx, i) => {
+                : filteredTxs.length === 0 ?  (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-[13px] text-gray-400">
+                        {tab === 'unconfirmed' ? 'No unconfirmed transactions' : 'No transactions found'}
+                      </td>
+                    </tr>
+                  )
+                : filteredTxs.map((tx, i) => {
                     const isIn      = tx.direction === 'in';
                     const isUnknown = tx.direction === 'unknown';
                     const isExp     = expandedRows.has(tx.txid);
-                    const isLast    = i === txs.length - 1;
+                    const isLast    = i === filteredTxs.length - 1;
 
                     return (
                       <>

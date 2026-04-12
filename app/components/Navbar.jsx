@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { smartSearch } from '../lib/api';
 
 const chains = [
   { name: 'Litecoin', ticker: 'LTC', href: '/explorer/litecoin', icon: '/ltc.svg', desc: 'Scrypt PoW · 2.5 min blocks' },
@@ -32,6 +34,32 @@ function ChevronDown() {
 export default function Navbar() {
   const [open, setOpen] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const router = useRouter();
+  const pathname = usePathname();
+  const isHome = pathname === '/';
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setSearchError('');
+    try {
+      const result = await smartSearch(q);
+      if (!result) { setSearchError('Not found'); return; }
+      const routes = { tx: 'tx', block: 'block', address: 'address' };
+      router.push(`/explorer/litecoin/${routes[result.type]}/${q}`);
+      setQuery('');
+      setSearchError('');
+    } catch {
+      setSearchError('Search failed');
+    } finally {
+      setSearching(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-[#020d1c] border-none transition-colors duration-300">
@@ -106,8 +134,40 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right side: mobile hamburger */}
+        {/* Right side: search + mobile hamburger */}
         <div className="ml-auto flex items-center gap-3">
+
+          {/* Compact search bar — hidden on home page (has its own) */}
+          {!isHome && (
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setSearchError(''); }}
+                placeholder="Search address / tx / block..."
+                disabled={searching}
+                className="w-[220px] lg:w-[300px] xl:w-[360px] pl-3.5 pr-9 py-[7px] rounded-full border border-gray-200 dark:border-[#1a3a60] text-[13px] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all duration-200 bg-transparent disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                disabled={searching}
+                className="absolute right-[4px] top-1/2 -translate-y-1/2 w-[28px] h-[28px] rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 flex items-center justify-center transition-colors"
+              >
+                {searching ? (
+                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="13" height="13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                )}
+              </button>
+              {searchError && (
+                <span className="absolute top-full mt-1 left-0 text-[11px] font-bold text-red-500 whitespace-nowrap">{searchError}</span>
+              )}
+            </form>
+          )}
 
           {/* Mobile hamburger */}
           <button
@@ -131,6 +191,41 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="lg:hidden bg-white dark:bg-[#020d1c] px-4 py-5 flex flex-col divide-y divide-gray-100 dark:divide-[#0e2444] transition-colors duration-300">
+
+          {/* Mobile search */}
+          {!isHome && (
+            <div className="pb-4">
+              <form onSubmit={(e) => { handleSearch(e); setMobileOpen(false); }} className="relative">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => { setQuery(e.target.value); setSearchError(''); }}
+                  placeholder="Search address / tx / block..."
+                  disabled={searching}
+                  className="w-full pl-3.5 pr-9 py-[9px] rounded-full border border-gray-200 dark:border-[#1a3a60] text-[13px] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-blue-500 bg-transparent disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  aria-label="Search"
+                  disabled={searching}
+                  className="absolute right-[4px] top-1/2 -translate-y-1/2 w-[30px] h-[30px] rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 flex items-center justify-center transition-colors"
+                >
+                  {searching ? (
+                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg width="13" height="13" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                  )}
+                </button>
+                {searchError && (
+                  <span className="text-[11px] font-bold text-red-500 mt-1 block">{searchError}</span>
+                )}
+              </form>
+            </div>
+          )}
+
           <div className="pb-4">
             <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-3">
               Explore

@@ -74,7 +74,7 @@ export default function Home() {
             </span>
           </span>
         </h1>
-        <p className="text-[14px] text-gray-400 dark:text-gray-500 leading-relaxed mb-14 max-w-2xl">
+        <p className="text-[14px] text-gray-500 dark:text-gray-400 leading-relaxed mb-14 max-w-2xl">
           We only provide limited cryptocurrency explorers, APIs and payment gateways
           as the early stage of CoinsFlow — more cryptocurrencies to come soon.
         </p>

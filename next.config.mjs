@@ -6,6 +6,10 @@ const nextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
     ],
   },
+  experimental: {
+    browsersListForSwc: true,
+    legacyBrowsers: false,
+  },
 };
 
 export default nextConfig;

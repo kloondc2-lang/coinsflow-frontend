@@ -171,11 +171,11 @@ export default function AddressDetail() {
           {/* Right: QR code spanning full card height — hidden on mobile */}
           <div className="hidden sm:flex flex-shrink-0 flex-col items-center justify-center gap-2 border-l border-gray-100 dark:border-[#0e2444] px-6 bg-gray-50 dark:bg-[#060e1a]">
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(address)}&bgcolor=transparent&color=000000&format=svg`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(address)}&bgcolor=ffffff&color=000000&format=svg&qzone=2`}
               alt="QR Code"
               width={130}
               height={130}
-              className="rounded-md dark:invert"
+              className="rounded-md bg-white p-1"
             />
             <span className="text-[10px] font-medium text-gray-400 dark:text-gray-600 tracking-wide">Scan address</span>
           </div>

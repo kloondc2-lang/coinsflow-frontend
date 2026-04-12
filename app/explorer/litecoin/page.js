@@ -146,11 +146,10 @@ function BlockchainStrip({ blocks, loading, mempoolData }) {
                       className="absolute flex flex-col items-center justify-center text-center"
                       style={{
                         top: 0, left: SIDE_W, width: FACE_W, height: FACE_H,
-                        background: `linear-gradient(to top, #1d80e2 ${mempoolFillPct}%, #13243A ${mempoolFillPct}%)`,
+                        background: `linear-gradient(to top, #16a34a ${mempoolFillPct}%, #13243A ${mempoolFillPct}%)`,
                         animation: 'mempoolPulse 2s ease-in-out infinite',
                       }}
                     >
-                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-green-500" />
                       <span className="text-[11px] text-green-300/80">Unconfirmed</span>
                       <span className="text-[18px] font-extrabold text-white leading-tight mt-2">
                         {mempoolData.size_kb.toFixed(2)} <span className="text-[11px] font-bold text-gray-300">kB</span>
@@ -218,10 +217,6 @@ function BlockchainStrip({ blocks, loading, mempoolData }) {
                         background: `linear-gradient(to top, #1d80e2 ${fillPct}%, #13243A ${fillPct}%)`,
                       }}
                     >
-                      {/* Green accent for latest confirmed */}
-                      {isLatest && (
-                        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-green-500" />
-                      )}
 
                       <span className="text-[11px] text-white/80">~0 lit/vB</span>
                       <span className="text-[11px] font-bold text-yellow-400 mt-0.5">

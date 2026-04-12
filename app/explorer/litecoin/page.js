@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { fetchBlocks } from '../../lib/api';
+import { fetchBlocks, fetchMempool } from '../../lib/api';
 
 function Skeleton({ className = '' }) {
   return (
@@ -39,7 +39,7 @@ const BLOCKS_PER_PAGE = 20;
 const STRIP_BLOCKS = 100;
 
 /* ─── Full-width drag-scrollable 3D blockchain strip ─── */
-function BlockchainStrip({ blocks, loading }) {
+function BlockchainStrip({ blocks, loading, mempoolData }) {
   const router = useRouter();
   const containerRef = useRef(null);
   const dragRef = useRef({ isDragging: false, startX: 0, scrollLeft: 0, hasMoved: false, velX: 0, lastX: 0, lastTime: 0, animId: 0 });
@@ -98,6 +98,11 @@ function BlockchainStrip({ blocks, loading }) {
   };
 
   const maxTx = Math.max(...(blocks.map(b => b.tx_count) || [1]), 1);
+  const lastBlockTimestamp = blocks[0]?.time ?? 0;
+  const elapsedSec = lastBlockTimestamp ? Math.max(0, Date.now() / 1000 - lastBlockTimestamp) : 0;
+  const remainMin = Math.max(0, 2.5 - elapsedSec / 60);
+  const estLabel = remainMin < 0.5 ? 'In < 1 min' : `In ~${Math.ceil(remainMin)} min`;
+  const mempoolFillPct = mempoolData ? Math.min(95, Math.max(5, Math.round((mempoolData.count / maxTx) * 100))) : 20;
   const SIDE_W = 20;
   const TOP_H = 20;
   const FACE_W = 140;
@@ -117,14 +122,56 @@ function BlockchainStrip({ blocks, loading }) {
         className="flex overflow-x-hidden pl-8 md:pl-12 pr-4 md:pr-8 pt-8 pb-3 select-none cursor-grab active:cursor-grabbing touch-pan-y"
         style={{ gap: '28px' }}
       >
-        {loading
-          ? Array.from({ length: 16 }, (_, i) => (
-              <div key={i} className="flex-shrink-0 flex flex-col items-center">
-                <div className="h-4 w-14 mb-3 rounded bg-gray-300 dark:bg-gray-700/40 animate-pulse" />
-                <div className="rounded animate-pulse bg-gray-300 dark:bg-gray-700/40" style={{ width: FACE_W, height: FACE_H }} />
-              </div>
-            ))
-          : blocks.map((block, i) => {
+        {loading ? (
+          Array.from({ length: 16 }, (_, i) => (
+            <div key={i} className="flex-shrink-0 flex flex-col items-center">
+              <div className="h-4 w-14 mb-3 rounded bg-gray-300 dark:bg-gray-700/40 animate-pulse" />
+              <div className="rounded animate-pulse bg-gray-300 dark:bg-gray-700/40" style={{ width: FACE_W, height: FACE_H }} />
+            </div>
+          ))
+        ) : (
+          <>
+            {/* Mempool pending block */}
+            {mempoolData && (
+              <>
+                <div className="flex-shrink-0 flex flex-col items-center cursor-default">
+                  <span className="text-[13px] font-bold text-green-400 mb-3">Next Block</span>
+                  <div className="relative" style={{ width: FACE_W + SIDE_W, height: FACE_H + TOP_H + TOP_H }}>
+                    {/* Top face */}
+                    <div className="absolute" style={{ top: 0, left: 0, width: FACE_W, height: TOP_H, background: '#0F1B2D', transform: 'skewX(-45deg)', transformOrigin: 'bottom right' }} />
+                    {/* Left side face */}
+                    <div className="absolute" style={{ top: 0, left: 0, width: SIDE_W, height: FACE_H, background: '#091525', transform: 'skewY(-45deg)', transformOrigin: 'bottom right' }} />
+                    {/* Front face — pulsing glow */}
+                    <div
+                      className="absolute flex flex-col items-center justify-center text-center"
+                      style={{
+                        top: 0, left: SIDE_W, width: FACE_W, height: FACE_H,
+                        background: `linear-gradient(to top, #1d80e2 ${mempoolFillPct}%, #13243A ${mempoolFillPct}%)`,
+                        animation: 'mempoolPulse 2s ease-in-out infinite',
+                      }}
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-green-500" />
+                      <span className="text-[11px] text-green-300/80">Unconfirmed</span>
+                      <span className="text-[18px] font-extrabold text-white leading-tight mt-2">
+                        {mempoolData.size_kb.toFixed(2)} <span className="text-[11px] font-bold text-gray-300">kB</span>
+                      </span>
+                      <span className="text-[10px] text-gray-300/80 mt-2">
+                        {mempoolData.count.toLocaleString()} txs
+                      </span>
+                      <span className="text-[11px] font-bold mt-1 text-green-400">{estLabel}</span>
+                    </div>
+                    {/* Bottom face */}
+                    <div className="absolute" style={{ top: FACE_H, left: SIDE_W, width: FACE_W, height: TOP_H, background: '#091525', transform: 'skewX(-45deg)', transformOrigin: 'top right' }} />
+                  </div>
+                </div>
+                {/* Green separator line */}
+                <div className="flex-shrink-0 flex items-center" style={{ paddingTop: TOP_H, height: FACE_H + TOP_H * 2 }}>
+                  <div style={{ width: 1, height: FACE_H * 0.8, background: 'linear-gradient(to bottom, transparent, #22c55e 30%, #22c55e 70%, transparent)' }} />
+                </div>
+              </>
+            )}
+            {/* Confirmed blocks */}
+            {blocks.map((block, i) => {
               const isLatest = i === 0;
               const fillPct = Math.max(12, Math.round((block.tx_count / maxTx) * 100));
 
@@ -148,7 +195,7 @@ function BlockchainStrip({ blocks, loading }) {
                       className="absolute"
                       style={{
                         top: 0, left: 0, width: FACE_W, height: TOP_H,
-                        background: '#888',
+                        background: '#0F1B2D',
                         transform: 'skewX(-45deg)',
                         transformOrigin: 'bottom right',
                       }}
@@ -158,7 +205,7 @@ function BlockchainStrip({ blocks, loading }) {
                       className="absolute"
                       style={{
                         top: 0, left: 0, width: SIDE_W, height: FACE_H,
-                        background: '#505050',
+                        background: '#091525',
                         transform: 'skewY(-45deg)',
                         transformOrigin: 'bottom right',
                       }}
@@ -168,10 +215,10 @@ function BlockchainStrip({ blocks, loading }) {
                       className="absolute flex flex-col items-center justify-center text-center"
                       style={{
                         top: 0, left: SIDE_W, width: FACE_W, height: FACE_H,
-                        background: `linear-gradient(to top, #1d80e2 ${fillPct}%, #666 ${fillPct}%)`,
+                        background: `linear-gradient(to top, #1d80e2 ${fillPct}%, #13243A ${fillPct}%)`,
                       }}
                     >
-                      {/* Green accent for latest */}
+                      {/* Green accent for latest confirmed */}
                       {isLatest && (
                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-green-500" />
                       )}
@@ -195,7 +242,7 @@ function BlockchainStrip({ blocks, loading }) {
                       className="absolute"
                       style={{
                         top: FACE_H, left: SIDE_W, width: FACE_W, height: TOP_H,
-                        background: '#4a4a4a',
+                        background: '#091525',
                         transform: 'skewX(-45deg)',
                         transformOrigin: 'top right',
                       }}
@@ -204,6 +251,8 @@ function BlockchainStrip({ blocks, loading }) {
                 </a>
               );
             })}
+          </>
+        )}
       </div>
     </div>
   );
@@ -217,6 +266,7 @@ export default function LitecoinExplorer() {
   const [page, setPage]               = useState(1);
   const [stripBlocks, setStripBlocks] = useState([]);
   const [stripLoading, setStripLoading] = useState(true);
+  const [mempoolData, setMempoolData] = useState(null);
 
   const loadBlocks = useCallback(async (p = 1) => {
     try {
@@ -235,8 +285,12 @@ export default function LitecoinExplorer() {
   const loadStripBlocks = useCallback(async () => {
     try {
       setStripLoading(true);
-      const res = await fetchBlocks(1, STRIP_BLOCKS);
+      const [res, mempool] = await Promise.all([
+        fetchBlocks(1, STRIP_BLOCKS),
+        fetchMempool().catch(() => null),
+      ]);
       setStripBlocks(res?.blocks ?? []);
+      setMempoolData(mempool);
     } catch {
     } finally {
       setStripLoading(false);
@@ -325,7 +379,7 @@ export default function LitecoinExplorer() {
       )}
 
       {/* Blockchain visualization — drag-scrollable 3D block cubes */}
-      <BlockchainStrip blocks={stripBlocks} loading={stripLoading} />
+      <BlockchainStrip blocks={stripBlocks} loading={stripLoading} mempoolData={mempoolData} />
 
       {/* Info panels */}
       <div className="flex flex-col lg:flex-row gap-4 mb-4">

@@ -23,6 +23,10 @@ export function fetchBlock(hash) {
   return apiFetch(`/explorer/litecoin/blocks/${hash}`);
 }
 
+export function fetchMempool() {
+  return apiFetch('/explorer/litecoin/blocks/mempool');
+}
+
 // ── Litecoin transactions ─────────────────────────────────────────────────────
 
 export function fetchTx(txid) {

@@ -90,7 +90,8 @@ export default function AddressDetail() {
 
   useEffect(() => { if (address) loadPage(1); }, [address]);
 
-  const totalPages = data ? Math.max(1, Math.ceil((data.tx_count || 0) / LIMIT)) : 1;
+  const historyLimited = data?.history_limited === true;
+  const totalPages = data ? Math.max(1, Math.ceil(((data.pagination?.total ?? data.tx_count) || 0) / LIMIT)) : 1;
   const txs = data?.transactions ?? [];
 
   const toggleRow = (txid) => {
@@ -153,7 +154,7 @@ export default function AddressDetail() {
           <div className="px-5 py-4">
             <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Transactions</div>
             {loading ? <Skeleton className="h-6 w-20" /> : (
-              <div className="text-[18px] font-extrabold text-gray-900 dark:text-white">{data?.tx_count?.toLocaleString()}</div>
+              <div className="text-[18px] font-extrabold text-gray-900 dark:text-white">{data?.tx_count != null ? data.tx_count.toLocaleString() : 'Many'}</div>
             )}
           </div>
         </div>
@@ -166,11 +167,19 @@ export default function AddressDetail() {
         </div>
       )}
 
+      {historyLimited && !loading && (
+        <div className="mb-5 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 px-5 py-3">
+          <p className="text-[13px] font-bold text-amber-700 dark:text-amber-400">
+            This address has a very large transaction history. Showing recent UTXO activity only.
+          </p>
+        </div>
+      )}
+
       {/* Transactions table */}
       <div className="rounded-xl border border-gray-200 dark:border-[#0e2444] overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a] flex items-center justify-between">
           <h2 className="text-[13px] font-bold text-gray-600 dark:text-gray-400">
-            Confirmed Transactions
+            {historyLimited ? 'Recent UTXO Activity' : 'Confirmed Transactions'}
             {!loading && data?.tx_count != null && (
               <span className="ml-2 text-gray-400 font-normal">({data.tx_count.toLocaleString()} total)</span>
             )}

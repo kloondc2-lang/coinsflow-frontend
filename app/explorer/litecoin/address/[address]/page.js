@@ -120,61 +120,64 @@ export default function AddressDetail() {
 
       {/* Address header */}
       <div className="rounded-xl border border-gray-200 dark:border-[#0e2444] mb-5 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a]">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
+        <div className="flex">
+          {/* Left: address + balance stats */}
+          <div className="flex-1 min-w-0">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-[#0e2444] bg-gray-50 dark:bg-[#060e1a]">
               <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Address</div>
               <div className="flex items-center flex-wrap gap-1">
                 <span className="font-mono text-[14px] sm:text-[15px] font-bold text-gray-900 dark:text-white break-all">{address}</span>
                 <CopyBtn text={address} />
               </div>
             </div>
-            {/* QR Code */}
-            <div className="flex-shrink-0">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(address)}&bgcolor=transparent&color=9ca3af&format=svg`}
-                alt="QR Code"
-                width={80}
-                height={80}
-                className="rounded-lg border border-gray-100 dark:border-[#0e2444] bg-white p-1"
-              />
+
+            {/* Balance strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-[#0e2444]">
+              <div className="px-5 py-4">
+                <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Balance</div>
+                {loading ? <Skeleton className="h-6 w-40" /> : (
+                  <>
+                    <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
+                      {data?.balance_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
+                    </div>
+                    <div className="text-[13px] text-gray-400 mt-0.5">
+                      ${data?.balance_usd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Unconfirmed</div>
+                {loading ? <Skeleton className="h-6 w-32" /> : (
+                  <>
+                    <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
+                      {data?.unconfirmed_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
+                    </div>
+                    <div className="text-[13px] text-gray-400 mt-0.5">
+                      ${(data?.unconfirmed_ltc * (data?.ltc_price_usd ?? 0))?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Transactions</div>
+                {loading ? <Skeleton className="h-6 w-20" /> : (
+                  <div className="text-[18px] font-extrabold text-gray-900 dark:text-white">{data?.tx_count != null ? data.tx_count.toLocaleString() : 'Many'}</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Balance strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-[#0e2444]">
-          <div className="px-5 py-4">
-            <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Balance</div>
-            {loading ? <Skeleton className="h-6 w-40" /> : (
-              <>
-                <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
-                  {data?.balance_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
-                </div>
-                <div className="text-[13px] text-gray-400 mt-0.5">
-                  ${data?.balance_usd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-                </div>
-              </>
-            )}
-          </div>
-          <div className="px-5 py-4">
-            <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Unconfirmed</div>
-            {loading ? <Skeleton className="h-6 w-32" /> : (
-              <>
-                <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
-                  {data?.unconfirmed_ltc?.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
-                </div>
-                <div className="text-[13px] text-gray-400 mt-0.5">
-                  ${(data?.unconfirmed_ltc * (data?.ltc_price_usd ?? 0))?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-                </div>
-              </>
-            )}
-          </div>
-          <div className="px-5 py-4">
-            <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Transactions</div>
-            {loading ? <Skeleton className="h-6 w-20" /> : (
-              <div className="text-[18px] font-extrabold text-gray-900 dark:text-white">{data?.tx_count != null ? data.tx_count.toLocaleString() : 'Many'}</div>
-            )}
+          {/* Right: QR code spanning full card height — hidden on mobile */}
+          <div className="hidden sm:flex flex-shrink-0 flex-col items-center justify-center gap-2 border-l border-gray-100 dark:border-[#0e2444] px-6 bg-gray-50 dark:bg-[#060e1a]">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(address)}&bgcolor=transparent&color=000000&format=svg`}
+              alt="QR Code"
+              width={130}
+              height={130}
+              className="rounded-md dark:invert"
+            />
+            <span className="text-[10px] font-medium text-gray-400 dark:text-gray-600 tracking-wide">Scan address</span>
           </div>
         </div>
       </div>

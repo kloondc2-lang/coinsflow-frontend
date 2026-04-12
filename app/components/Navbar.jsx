@@ -135,18 +135,18 @@ export default function Navbar() {
         </nav>
 
         {/* Right side: search + mobile hamburger */}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
 
           {/* Compact search bar — hidden on home page (has its own) */}
           {!isHome && (
-            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative flex-1 min-w-0 max-w-2xl">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSearchError(''); }}
                 placeholder="Search address / tx / block..."
                 disabled={searching}
-                className="w-[220px] lg:w-[300px] xl:w-[360px] pl-3.5 pr-9 py-[7px] rounded-full border border-gray-200 dark:border-[#1a3a60] text-[13px] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all duration-200 bg-transparent disabled:opacity-60"
+                className="w-full pl-3.5 pr-9 py-[7px] rounded-full border border-gray-200 dark:border-[#1a3a60] text-[13px] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all duration-200 bg-transparent disabled:opacity-60"
               />
               <button
                 type="submit"

@@ -231,7 +231,7 @@ export default function AddressDetail() {
               <span className="ml-2 text-[12px] text-gray-400 font-normal">({data.tx_count.toLocaleString()} total)</span>
             )}
           </div>
-          {!loading && totalPages > 1 && (
+          {!loading && tab === 'confirmed' && totalPages > 1 && (
             <span className="text-[12px] text-gray-400">Page {page} / {totalPages}</span>
           )}
         </div>
@@ -397,7 +397,7 @@ export default function AddressDetail() {
         </div>
       </div>
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={loadPage} />
+      {tab === 'confirmed' && <Pagination page={page} totalPages={totalPages} onPageChange={loadPage} />}
     </div>
   );
 }

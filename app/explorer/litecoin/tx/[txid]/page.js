@@ -85,6 +85,24 @@ export default function TxDetail() {
     (out) => !(out.is_data_carrier && out.value_ltc === 0)
   );
 
+  // Group inputs by address, merging UTXOs from the same address
+  const groupedInputs = (data?.inputs ?? []).reduce((acc, inp) => {
+    if (inp.label === 'Block Reward') return [...acc, { isBlockReward: true }];
+    const key = inp.address ?? null;
+    const existing = key ? acc.find(g => g.address === key) : null;
+    if (existing) {
+      existing.value_ltc = (existing.value_ltc ?? 0) + (inp.value_ltc ?? 0);
+      existing.value_usd =
+        existing.value_usd != null && inp.value_usd != null
+          ? existing.value_usd + inp.value_usd
+          : (existing.value_usd ?? inp.value_usd);
+      existing.count += 1;
+    } else {
+      acc.push({ ...inp, count: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 pb-16">
 
@@ -244,124 +262,144 @@ export default function TxDetail() {
         </div>
       )}
 
-      {/* -- Inputs / Outputs ------------------------------------------------ */}
+      {/* -- From / To flow ------------------------------------------------- */}
       {(loading || data) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-gray-100 dark:border-[#0e2444] bg-white dark:bg-[#060f1e] overflow-hidden">
 
-          {/* Inputs */}
-          <div className="rounded-2xl border border-gray-100 dark:border-[#0e2444] bg-white dark:bg-[#060f1e] overflow-hidden">
-            <div className="px-6 py-3.5 border-b border-gray-100 dark:border-[#0a1a30] flex items-center">
-              <h2 className="text-[13px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">Inputs</h2>
-              {!loading && (
-                <span className="ml-auto px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#0e2444] text-gray-500 dark:text-gray-400 text-[12px] font-extrabold">
-                  {data?.inputs?.length ?? 0}
-                </span>
-              )}
-            </div>
+          {/* FROM header */}
+          <div className="px-6 py-3.5 border-b border-gray-100 dark:border-[#0a1a30] flex items-center bg-gray-50 dark:bg-[#050d1a]">
+            <h2 className="text-[13px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">From</h2>
+            {!loading && (
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#0e2444] text-gray-500 dark:text-gray-400 text-[12px] font-extrabold">
+                {data?.inputs?.length ?? 0}
+              </span>
+            )}
+          </div>
 
-            <div className="divide-y divide-gray-50 dark:divide-[#0a1a30]">
-              {loading
-                ? Array.from({ length: 2 }, (_, i) => (
-                    <div key={i} className="px-6 py-5 flex flex-col gap-2">
-                      <Skeleton className="h-4 w-52" />
-                      <Skeleton className="h-4 w-28" />
-                    </div>
-                  ))
-                : (data?.inputs ?? []).map((inp, i) => (
-                    <div key={i} className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 text-[12px] font-extrabold text-gray-300 dark:text-gray-600 min-w-[20px]">{i}</span>
-                        <div className="min-w-0 flex-1">
-                          {inp.label === 'Block Reward' ? (
-                            <div className="flex items-center gap-2">
-                              <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[13px] font-extrabold">
-                                 Block Reward
-                              </span>
-                            </div>
+          {/* FROM rows */}
+          <div className="divide-y divide-gray-50 dark:divide-[#0a1a30]">
+            {loading
+              ? Array.from({ length: 2 }, (_, i) => (
+                  <div key={i} className="px-6 py-5 flex justify-between gap-4">
+                    <Skeleton className="h-4 w-52" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                ))
+              : groupedInputs.map((inp, i) => (
+                  <div key={i} className="px-6 py-4">
+                    {inp.isBlockReward ? (
+                      <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[13px] font-extrabold">
+                        ⛏ Block Reward
+                      </span>
+                    ) : (
+                      <div className="flex items-center justify-between gap-4 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {inp.address ? (
+                            <Link
+                              href={`/explorer/litecoin/address/${inp.address}`}
+                              className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
+                            >
+                              {inp.address}
+                            </Link>
                           ) : (
-                            <>
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                {inp.address ? (
-                                  <Link
-                                    href={`/explorer/litecoin/address/${inp.address}`}
-                                    className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
-                                  >
-                                    {inp.address}
-                                  </Link>
-                                ) : (
-                                  <span className="font-mono text-gray-400 text-[13px]">Unknown</span>
-                                )}
-                                {inp.address && <CopyBtn text={inp.address} />}
-                              </div>
-                              <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100 mt-1.5">
-                                {fmt8(inp.value_ltc)} <span className="text-gray-400 font-bold">LTC</span>
-                                {inp.value_usd != null && (
-                                  <span className="text-[13px] text-gray-400 font-semibold ml-2">({fmtUsd(inp.value_usd)})</span>
-                                )}
-                              </div>
-                            </>
+                            <span className="font-mono text-gray-400 text-[13px]">Unknown</span>
+                          )}
+                          {inp.address && <CopyBtn text={inp.address} />}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
+                            {fmt8(inp.value_ltc)} <span className="text-gray-400 font-bold text-[13px]">LTC</span>
+                          </div>
+                          {inp.value_usd != null && (
+                            <div className="text-[12px] text-gray-400 font-semibold">{fmtUsd(inp.value_usd)}</div>
+                          )}
+                          {inp.count > 1 && (
+                            <div className="text-[10px] text-gray-400 mt-0.5">{inp.count} inputs merged</div>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-            </div>
+                    )}
+                  </div>
+                ))}
           </div>
 
-          {/* Outputs */}
-          <div className="rounded-2xl border border-gray-100 dark:border-[#0e2444] bg-white dark:bg-[#060f1e] overflow-hidden">
-            <div className="px-6 py-3.5 border-b border-gray-100 dark:border-[#0a1a30] flex items-center">
-              <h2 className="text-[13px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">Outputs</h2>
-              {!loading && (
-                <span className="ml-auto px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#0e2444] text-gray-500 dark:text-gray-400 text-[12px] font-extrabold">
-                  {visibleOutputs.length}
+          {/* Arrow divider */}
+          <div className="flex items-center justify-center py-2.5 border-y border-gray-100 dark:border-[#0a1a30] bg-gray-50 dark:bg-[#050d1a]">
+            <span className="text-gray-400 text-[18px] select-none">↓</span>
+          </div>
+
+          {/* TO header */}
+          <div className="px-6 py-3.5 border-b border-gray-100 dark:border-[#0a1a30] flex items-center bg-gray-50 dark:bg-[#050d1a]">
+            <h2 className="text-[13px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">To</h2>
+            {!loading && (
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#0e2444] text-gray-500 dark:text-gray-400 text-[12px] font-extrabold">
+                {visibleOutputs.length}
+              </span>
+            )}
+          </div>
+
+          {/* TO rows */}
+          <div className="divide-y divide-gray-50 dark:divide-[#0a1a30]">
+            {loading
+              ? Array.from({ length: 2 }, (_, i) => (
+                  <div key={i} className="px-6 py-5 flex justify-between gap-4">
+                    <Skeleton className="h-4 w-52" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                ))
+              : visibleOutputs.map((out, i) => (
+                  <div key={i} className="px-6 py-4">
+                    <div className="flex items-center justify-between gap-4 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {out.address ? (
+                          <Link
+                            href={`/explorer/litecoin/address/${out.address}`}
+                            className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
+                          >
+                            {out.address}
+                          </Link>
+                        ) : (
+                          <span className="font-mono text-gray-400 text-[13px]">{out.script_type ?? 'Non-standard'}</span>
+                        )}
+                        {out.address && <CopyBtn text={out.address} />}
+                        {out.script_type && out.script_type !== 'unknown' && out.script_type !== 'pubkeyhash' && out.script_type !== 'scripthash' && (
+                          <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-[#0e2444] text-gray-500 text-[10px] font-extrabold uppercase tracking-wide">
+                            {out.script_type}
+                          </span>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
+                          {fmt8(out.value_ltc)} <span className="text-gray-400 font-bold text-[13px]">LTC</span>
+                        </div>
+                        {out.value_usd != null && (
+                          <div className="text-[12px] text-gray-400 font-semibold">{fmtUsd(out.value_usd)}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+          </div>
+
+          {/* Fee + Total footer */}
+          {!loading && data && !isCoinbase && (
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-[#0a1a30] bg-gray-50 dark:bg-[#050d1a] flex flex-wrap gap-6">
+              <div>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">Fee </span>
+                <span className="text-[13px] font-extrabold text-gray-800 dark:text-gray-200">
+                  {fmt8(data.fee_ltc)} LTC
+                  {data.fee_usd ? <span className="text-gray-400 font-semibold ml-1">({fmtUsd(data.fee_usd)})</span> : null}
                 </span>
-              )}
+              </div>
+              <div>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total value </span>
+                <span className="text-[13px] font-extrabold text-gray-800 dark:text-gray-200">
+                  {fmt8(data.total_output_ltc)} LTC
+                  {data.amount_usd ? <span className="text-gray-400 font-semibold ml-1">({fmtUsd(data.amount_usd)})</span> : null}
+                </span>
+              </div>
             </div>
-
-            <div className="divide-y divide-gray-50 dark:divide-[#0a1a30]">
-              {loading
-                ? Array.from({ length: 2 }, (_, i) => (
-                    <div key={i} className="px-6 py-5 flex flex-col gap-2">
-                      <Skeleton className="h-4 w-52" />
-                      <Skeleton className="h-4 w-28" />
-                    </div>
-                  ))
-                : visibleOutputs.map((out, i) => (
-                    <div key={i} className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <span className="mt-0.5 text-[12px] font-extrabold text-gray-300 dark:text-gray-600 min-w-[20px]">{out.index ?? i}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            {out.address ? (
-                              <Link
-                                href={`/explorer/litecoin/address/${out.address}`}
-                                className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
-                              >
-                                {out.address}
-                              </Link>
-                            ) : (
-                              <span className="font-mono text-gray-400 text-[13px]">{out.script_type ?? 'Non-standard'}</span>
-                            )}
-                            {out.address && <CopyBtn text={out.address} />}
-                          </div>
-                          <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100 mt-1.5">
-                            {fmt8(out.value_ltc)} <span className="text-gray-400 font-bold">LTC</span>
-                            {out.value_usd != null && (
-                              <span className="text-[13px] text-gray-400 font-semibold ml-2">({fmtUsd(out.value_usd)})</span>
-                            )}
-                          </div>
-                          {out.script_type && out.script_type !== 'unknown' && out.script_type !== 'pubkeyhash' && out.script_type !== 'scripthash' && (
-                            <span className="inline-block mt-1 px-2 py-0.5 rounded bg-gray-100 dark:bg-[#0e2444] text-gray-500 text-[10px] font-extrabold uppercase tracking-wide">
-                              {out.script_type}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-            </div>
-          </div>
+          )}
 
         </div>
       )}

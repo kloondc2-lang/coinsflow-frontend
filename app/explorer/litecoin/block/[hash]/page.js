@@ -127,9 +127,9 @@ export default function BlockDetail() {
           <thead>
             <tr className="border-b border-gray-100 dark:border-[#0e2444] text-gray-500 dark:text-gray-400 font-extrabold">
               <th className="text-left px-4 py-3">TXID</th>
-              <th className="text-left px-4 py-3">Type</th>
+              <th className="text-left px-4 py-3 hidden sm:table-cell">Type</th>
               <th className="text-left px-4 py-3">Amount (LTC)</th>
-              <th className="text-right px-4 py-3">Amount (USD)</th>
+              <th className="text-right px-4 py-3 hidden sm:table-cell">Amount (USD)</th>
             </tr>
           </thead>
           <tbody>
@@ -137,9 +137,9 @@ export default function BlockDetail() {
               ? Array.from({ length: 10 }, (_, i) => (
                   <tr key={i} className="border-b border-gray-50 dark:border-[#0a1a30]">
                     <td className="px-4 py-3"><Skeleton className="h-4 w-48" /></td>
-                    <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-4 py-3 hidden sm:table-cell"><Skeleton className="h-4 w-16" /></td>
                     <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-4 py-3 text-right"><Skeleton className="h-4 w-20 ml-auto" /></td>
+                    <td className="px-4 py-3 hidden sm:table-cell text-right"><Skeleton className="h-4 w-20 ml-auto" /></td>
                   </tr>
                 ))
               : pagedTxs.map((tx, i) => (
@@ -149,7 +149,7 @@ export default function BlockDetail() {
                         {truncateHash(tx.txid)}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       {tx.is_coinbase ? (
                         <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[11px] font-extrabold">Coinbase</span>
                       ) : (
@@ -157,7 +157,7 @@ export default function BlockDetail() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-extrabold text-gray-700 dark:text-gray-300">{tx.amount_ltc?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-500 dark:text-gray-400">${tx.amount_usd?.toLocaleString()}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell text-right font-bold text-gray-500 dark:text-gray-400">${tx.amount_usd?.toLocaleString()}</td>
                   </tr>
                 ))}
           </tbody>

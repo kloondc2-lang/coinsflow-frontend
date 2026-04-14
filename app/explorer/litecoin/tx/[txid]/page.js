@@ -286,18 +286,18 @@ export default function TxDetail() {
                     </div>
                   ))
                 : groupedInputs.map((inp, i) => (
-                    <div key={i} className="px-6 py-4">
+                    <div key={i} className="px-4 sm:px-6 py-4">
                       {inp.isBlockReward ? (
                         <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[13px] font-extrabold">
                           ⛏ Block Reward
                         </span>
                       ) : (
-                        <div className="flex items-center justify-between gap-4 min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             {inp.address ? (
                               <Link
                                 href={`/explorer/litecoin/address/${inp.address}`}
-                                className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
+                                className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[12px] sm:text-[13px] break-all min-w-0"
                               >
                                 {inp.address}
                               </Link>
@@ -306,9 +306,9 @@ export default function TxDetail() {
                             )}
                             {inp.address && <CopyBtn text={inp.address} />}
                           </div>
-                          <div className="shrink-0 text-right">
-                            <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
-                              {fmt8(inp.value_ltc)} <span className="text-gray-400 font-bold text-[13px]">LTC</span>
+                          <div className="shrink-0 sm:text-right">
+                            <div className="text-[13px] sm:text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
+                              {fmt8(inp.value_ltc)} <span className="text-gray-400 font-bold text-[12px]">LTC</span>
                             </div>
                             {inp.value_usd != null && (
                               <div className="text-[12px] text-gray-400 font-semibold">{fmtUsd(inp.value_usd)}</div>
@@ -344,13 +344,13 @@ export default function TxDetail() {
                     </div>
                   ))
                 : visibleOutputs.map((out, i) => (
-                    <div key={i} className="px-6 py-4">
-                      <div className="flex items-center justify-between gap-4 min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
+                    <div key={i} className="px-4 sm:px-6 py-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           {out.address ? (
                             <Link
                               href={`/explorer/litecoin/address/${out.address}`}
-                              className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[13px] break-all"
+                              className="font-mono text-blue-500 hover:text-blue-400 font-bold text-[12px] sm:text-[13px] break-all min-w-0"
                             >
                               {out.address}
                             </Link>
@@ -359,14 +359,14 @@ export default function TxDetail() {
                           )}
                           {out.address && <CopyBtn text={out.address} />}
                           {out.script_type && out.script_type !== 'unknown' && out.script_type !== 'pubkeyhash' && out.script_type !== 'scripthash' && (
-                            <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-[#0e2444] text-gray-500 text-[10px] font-extrabold uppercase tracking-wide">
+                            <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-[#0e2444] text-gray-500 text-[10px] font-extrabold uppercase tracking-wide shrink-0">
                               {out.script_type}
                             </span>
                           )}
                         </div>
-                        <div className="shrink-0 text-right">
-                          <div className="text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
-                            {fmt8(out.value_ltc)} <span className="text-gray-400 font-bold text-[13px]">LTC</span>
+                        <div className="shrink-0 sm:text-right">
+                          <div className="text-[13px] sm:text-[14px] font-extrabold text-gray-800 dark:text-gray-100">
+                            {fmt8(out.value_ltc)} <span className="text-gray-400 font-bold text-[12px]">LTC</span>
                           </div>
                           {out.value_usd != null && (
                             <div className="text-[12px] text-gray-400 font-semibold">{fmtUsd(out.value_usd)}</div>

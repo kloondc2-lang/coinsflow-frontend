@@ -242,8 +242,8 @@ export default function AddressDetail() {
               <tr className="border-b border-gray-100 dark:border-[#0e2444] text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wide">
                 <th className="text-left px-4 py-3">Hash</th>
                 <th className="text-left px-4 py-3">+/- Amount</th>
-                <th className="text-left px-4 py-3">Date</th>
-                <th className="text-left px-4 py-3">Tx Fee</th>
+                <th className="text-left px-4 py-3 hidden sm:table-cell">Date</th>
+                <th className="text-left px-4 py-3 hidden sm:table-cell">Tx Fee</th>
                 <th className="w-10 px-2 py-3"></th>
               </tr>
             </thead>
@@ -253,8 +253,8 @@ export default function AddressDetail() {
                     <tr key={i} className="border-b border-gray-50 dark:border-[#0a1a30]">
                       <td className="px-4 py-3"><Skeleton className="h-4 w-44" /></td>
                       <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
-                      <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                      <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+                      <td className="px-4 py-3 hidden sm:table-cell"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-4 py-3 hidden sm:table-cell"><Skeleton className="h-4 w-16" /></td>
                       <td className="px-2 py-3"><Skeleton className="h-4 w-4" /></td>
                     </tr>
                   ))
@@ -311,7 +311,7 @@ export default function AddressDetail() {
                           </td>
 
                           {/* Date */}
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 hidden sm:table-cell">
                             {tx.block_height ? (
                               <>
                                 <div className="text-gray-700 dark:text-gray-300 font-medium">{tx.time_ago ?? '—'}</div>
@@ -323,7 +323,7 @@ export default function AddressDetail() {
                           </td>
 
                           {/* Fee */}
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 hidden sm:table-cell">
                             {tx.fee_ltc == null ? (
                               <span className="text-gray-400 text-[12px]">—</span>
                             ) : tx.fee_ltc === 0 ? (

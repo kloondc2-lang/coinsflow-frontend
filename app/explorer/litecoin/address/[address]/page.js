@@ -132,7 +132,7 @@ export default function AddressDetail() {
             </div>
 
             {/* Balance strip */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-[#0e2444]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-[#0e2444]">
               <div className="px-5 py-4">
                 <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Balance</div>
                 {loading ? <Skeleton className="h-6 w-40" /> : (
@@ -157,6 +157,40 @@ export default function AddressDetail() {
                       ${(data?.unconfirmed_ltc * (data?.ltc_price_usd ?? 0))?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                     </div>
                   </>
+                )}
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[11px] font-bold text-green-500 dark:text-green-400 uppercase tracking-wide mb-1.5">Total Received</div>
+                {loading ? <Skeleton className="h-6 w-36" /> : (
+                  data?.total_received_ltc != null ? (
+                    <>
+                      <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
+                        {data.total_received_ltc.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
+                      </div>
+                      <div className="text-[13px] text-gray-400 mt-0.5">
+                        ${(data.total_received_ltc * (data?.ltc_price_usd ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-[14px] text-gray-400">—</div>
+                  )
+                )}
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[11px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide mb-1.5">Total Sent</div>
+                {loading ? <Skeleton className="h-6 w-36" /> : (
+                  data?.total_sent_ltc != null ? (
+                    <>
+                      <div className="text-[18px] font-extrabold text-gray-900 dark:text-white leading-tight">
+                        {data.total_sent_ltc.toLocaleString(undefined, { minimumFractionDigits: 8, maximumFractionDigits: 8 })} LTC
+                      </div>
+                      <div className="text-[13px] text-gray-400 mt-0.5">
+                        ${(data.total_sent_ltc * (data?.ltc_price_usd ?? 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-[14px] text-gray-400">—</div>
+                  )
                 )}
               </div>
               <div className="px-5 py-4">

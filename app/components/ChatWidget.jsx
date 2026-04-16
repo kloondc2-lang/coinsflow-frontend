@@ -33,6 +33,8 @@ function AdminPanel({ onLogout }) {
   const [messages, setMessages] = useState([]);
   const [reply, setReply] = useState('');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
   const token = useRef(typeof window !== 'undefined' ? sessionStorage.getItem('cf_admin_token') : null);
   const bottomRef = useRef(null);
 
@@ -75,7 +77,10 @@ function AdminPanel({ onLogout }) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         const msg = payload.new;
         if (selected && msg.user_id === selected) {
-          setMessages((prev) => [...prev, msg]);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
         }
         // Refresh conversation list
         loadConversations();
@@ -98,15 +103,29 @@ function AdminPanel({ onLogout }) {
       });
       if (res.status === 401) { onLogout(); return; }
       const data = await res.json();
-      if (data.id) setMessages((prev) => [...prev, data]);
+      if (data.id) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === data.id)) return prev;
+          return [...prev, data];
+        });
+      }
     } catch { /* ignore */ }
   };
+
+  const totalUnread = conversations.filter((c) => c.unread).length;
+  const totalPages = Math.ceil(conversations.length / PAGE_SIZE);
+  const pageConvs = conversations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (!selected) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-purple-600">
-          <span className="text-white font-bold text-[13px]">Admin — Conversations</span>
+          <span className="text-white font-bold text-[13px] flex items-center gap-1.5">
+            Admin — Conversations
+            {totalUnread > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">{totalUnread}</span>
+            )}
+          </span>
           <button onClick={onLogout} className="text-white/70 hover:text-white text-[11px]">Logout</button>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -114,15 +133,20 @@ function AdminPanel({ onLogout }) {
             <div className="p-4 text-center text-gray-400 text-[13px]">Loading...</div>
           ) : conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-400 text-[13px]">No conversations yet</div>
-          ) : conversations.map((c) => (
+          ) : pageConvs.map((c) => (
             <button
               key={c.user_id}
               onClick={() => setSelected(c.user_id)}
-              className="w-full text-left px-3 py-3 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+              className={`w-full text-left px-3 py-3 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                c.unread ? 'border-l-[3px] border-l-blue-500 bg-blue-50/40 dark:bg-blue-900/10' : ''
+              }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[11px] text-blue-500 truncate max-w-[140px]">{c.user_id}</span>
-                <span className="text-[10px] text-gray-400">{c.count} msgs</span>
+                <span className={`font-mono text-[11px] truncate max-w-[140px] ${c.unread ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-blue-500'}`}>{c.user_id}</span>
+                <div className="flex items-center gap-1.5">
+                  {c.unread ? <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" /> : null}
+                  <span className="text-[10px] text-gray-400">{c.count} msgs</span>
+                </div>
               </div>
               <div className="text-[12px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
                 {c.last_sender === 'admin' && <span className="text-purple-500">You: </span>}
@@ -132,9 +156,26 @@ function AdminPanel({ onLogout }) {
             </button>
           ))}
         </div>
-        <button onClick={loadConversations} className="px-3 py-2 text-[12px] text-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          ↻ Refresh
-        </button>
+        <div className="flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700">
+          {totalPages > 1 ? (
+            <div className="flex items-center gap-2 text-[11px]">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 disabled:opacity-40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              >← Prev</button>
+              <span className="text-gray-400">{page} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 disabled:opacity-40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              >Next →</button>
+            </div>
+          ) : (
+            <span className="text-[11px] text-gray-400">{conversations.length} convo{conversations.length !== 1 ? 's' : ''}</span>
+          )}
+          <button onClick={loadConversations} className="text-[12px] text-blue-500 hover:text-blue-600">↻ Refresh</button>
+        </div>
       </div>
     );
   }
@@ -376,9 +417,7 @@ export default function ChatWidget() {
                 onClick={handleHeaderClick}
                 className="flex items-center gap-3 px-4 py-3 bg-blue-600 cursor-default select-none"
               >
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-[14px] font-bold">
-                  CF
-                </div>
+                <img src="/logo.png" alt="CoinsFlow" className="w-8 h-8 rounded-full object-contain" />
                 <div className="flex-1">
                   <div className="text-white font-bold text-[14px]">CoinsFlow Support</div>
                   <div className="text-blue-200 text-[11px]">We typically reply within a few hours</div>

@@ -183,6 +183,7 @@ function AdminPanel({ onLogout }) {
 // ADMIN LOGIN FORM
 // ══════════════════════════════════════════════════════════════════════════════
 function AdminLogin({ onLogin, onCancel }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -195,7 +196,7 @@ function AdminLogin({ onLogin, onCancel }) {
       const res = await fetch(`${API}/chat/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
@@ -212,17 +213,24 @@ function AdminLogin({ onLogin, onCancel }) {
       <div className="text-[14px] font-bold text-gray-800 dark:text-gray-200 mb-4">Admin Login</div>
       <form onSubmit={submit} className="w-full space-y-3">
         <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-[13px] outline-none border border-gray-200 dark:border-gray-700 focus:border-blue-500"
+          autoFocus
+        />
+        <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-[13px] outline-none border border-gray-200 dark:border-gray-700 focus:border-blue-500"
-          autoFocus
         />
         {error && <div className="text-[12px] text-red-500">{error}</div>}
         <button
           type="submit"
-          disabled={loading || !password}
+          disabled={loading || !email || !password}
           className="w-full py-2 rounded-lg bg-purple-600 text-white font-bold text-[13px] disabled:opacity-40 hover:bg-purple-700 transition-colors"
         >
           {loading ? 'Logging in...' : 'Login'}

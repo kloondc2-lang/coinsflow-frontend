@@ -1,7 +1,10 @@
 export async function POST(request) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
+
+  // If secret key isn't configured on this server, fail open (let user through)
+  // This prevents the gate from blocking the entire site due to a missing env var
   if (!secret) {
-    return Response.json({ success: false, error: 'Not configured' }, { status: 503 });
+    return Response.json({ success: true });
   }
 
   let token;
@@ -16,7 +19,6 @@ export async function POST(request) {
     return Response.json({ success: false, error: 'Token required' }, { status: 400 });
   }
 
-  // Forward requester IP to Cloudflare for better accuracy
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || undefined;
 
   const params = new URLSearchParams({ secret, response: token });
@@ -35,6 +37,7 @@ export async function POST(request) {
     }
     return Response.json({ success: false }, { status: 403 });
   } catch {
-    return Response.json({ success: false, error: 'Verification service unavailable' }, { status: 502 });
+    // Network error reaching Cloudflare — fail open to avoid blocking users
+    return Response.json({ success: true });
   }
 }

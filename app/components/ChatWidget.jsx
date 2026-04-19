@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.coinsflow.net';
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function getUserId() {
@@ -22,6 +23,47 @@ function fmtTime(iso) {
   const isToday = d.toDateString() === now.toDateString();
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   return isToday ? time : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
+}
+
+// ── Turnstile Widget ─────────────────────────────────────────────────────────
+function TurnstileWidget({ onToken, onExpire, theme = 'auto', size = 'normal' }) {
+  const containerRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current || !TURNSTILE_SITE_KEY) return;
+
+    const renderWidget = () => {
+      if (!containerRef.current || widgetIdRef.current != null) return;
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token) => onToken(token),
+        'expired-callback': () => { widgetIdRef.current = null; onExpire?.(); },
+        'error-callback': () => { widgetIdRef.current = null; onExpire?.(); },
+        theme,
+        size,
+      });
+    };
+
+    if (typeof window !== 'undefined' && window.turnstile) {
+      renderWidget();
+    } else {
+      const timer = setInterval(() => {
+        if (window.turnstile) { clearInterval(timer); renderWidget(); }
+      }, 50);
+      return () => clearInterval(timer);
+    }
+
+    return () => {
+      if (widgetIdRef.current != null) {
+        try { window.turnstile?.remove(widgetIdRef.current); } catch { /* ignore */ }
+        widgetIdRef.current = null;
+      }
+    };
+  }, []);
+
+  if (!TURNSTILE_SITE_KEY) return null;
+  return <div ref={containerRef} style={size === 'invisible' ? { display: 'none' } : undefined} />;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -228,6 +270,8 @@ function AdminLogin({ onLogin, onCancel }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tsToken, setTsToken] = useState('');
+  const [tsKey, setTsKey] = useState(0);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -237,7 +281,7 @@ function AdminLogin({ onLogin, onCancel }) {
       const res = await fetch(`${API}/chat/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, ...(tsToken && { turnstile_token: tsToken }) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
@@ -245,6 +289,8 @@ function AdminLogin({ onLogin, onCancel }) {
       onLogin();
     } catch (err) {
       setError(err.message);
+      setTsToken('');
+      setTsKey((k) => k + 1);
     }
     setLoading(false);
   };
@@ -269,9 +315,14 @@ function AdminLogin({ onLogin, onCancel }) {
           className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-[13px] outline-none border border-gray-200 dark:border-gray-700 focus:border-blue-500"
         />
         {error && <div className="text-[12px] text-red-500">{error}</div>}
+        {TURNSTILE_SITE_KEY && (
+          <div className="flex justify-center">
+            <TurnstileWidget key={tsKey} size="compact" theme="auto" onToken={setTsToken} onExpire={() => setTsToken('')} />
+          </div>
+        )}
         <button
           type="submit"
-          disabled={loading || !email || !password}
+          disabled={loading || !email || !password || (!!TURNSTILE_SITE_KEY && !tsToken)}
           className="w-full py-2 rounded-lg bg-purple-600 text-white font-bold text-[13px] disabled:opacity-40 hover:bg-purple-700 transition-colors"
         >
           {loading ? 'Logging in...' : 'Login'}
@@ -293,6 +344,8 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [tsToken, setTsToken] = useState('');
+  const [tsKey, setTsKey] = useState(0);
 
   // Admin state
   const [adminClicks, setAdminClicks] = useState(0);
@@ -355,6 +408,7 @@ export default function ChatWidget() {
 
   const sendMessage = async () => {
     if (!input.trim() || sending) return;
+    if (TURNSTILE_SITE_KEY && !tsToken) return;
     const msg = input.trim();
     setInput('');
     setSending(true);
@@ -362,7 +416,7 @@ export default function ChatWidget() {
       const res = await fetch(`${API}/chat/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId.current, message: msg }),
+        body: JSON.stringify({ user_id: userId.current, message: msg, ...(tsToken && { turnstile_token: tsToken }) }),
       });
       const data = await res.json();
       if (data.id) {
@@ -372,6 +426,9 @@ export default function ChatWidget() {
         });
       }
     } catch { /* ignore */ }
+    // Reset Turnstile for next message regardless of success/failure
+    setTsToken('');
+    setTsKey((k) => k + 1);
     setSending(false);
   };
 
@@ -455,6 +512,9 @@ export default function ChatWidget() {
 
               {/* Input */}
               <div className="flex items-center gap-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700">
+                {TURNSTILE_SITE_KEY && (
+                  <TurnstileWidget key={tsKey} size="invisible" onToken={setTsToken} onExpire={() => setTsToken('')} />
+                )}
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -465,7 +525,7 @@ export default function ChatWidget() {
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim() || sending}
+                  disabled={!input.trim() || sending || (!!TURNSTILE_SITE_KEY && !tsToken)}
                   className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center disabled:opacity-40 hover:bg-blue-700 transition-colors flex-shrink-0"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

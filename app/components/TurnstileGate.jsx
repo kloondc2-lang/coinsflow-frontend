@@ -96,8 +96,7 @@ export default function TurnstileGate({ children }) {
       <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#020d1c]">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <img src="/logo.png" alt="CoinsFlow" className="h-12 w-auto" />
-          <div className="text-white text-xl font-bold tracking-tight">CoinsFlow</div>
+          <img src="/logo.png" alt="CoinsFlow" className="h-24 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
           <div className="text-gray-400 text-sm">Verifying you&apos;re human before entering&hellip;</div>
         </div>
 

@@ -40,6 +40,31 @@ export default function RootLayout({ children }) {
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://api.coinsflow.net" crossOrigin="anonymous" />
+        {/* Organization schema — tells Google our logo and site identity */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'CoinsFlow',
+              url: 'https://coinsflow.net',
+              logo: 'https://coinsflow.net/cflogo.png',
+            }),
+          }}
+        />
+        {/* WebSite schema — tells Google our site name for the search result breadcrumb */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'CoinsFlow',
+              url: 'https://coinsflow.net',
+            }),
+          }}
+        />
       </head>
       <body
         className={`${inter.className} bg-white dark:bg-[#020d1c] text-gray-900 dark:text-gray-100 antialiased min-h-screen flex flex-col transition-colors duration-300`}

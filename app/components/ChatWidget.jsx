@@ -310,6 +310,10 @@ export default function ChatWidget() {
     if (sessionStorage.getItem('cf_admin_token')) {
       setIsAdmin(true);
     }
+    // Listen for external open trigger (e.g. Navbar Support button)
+    const handler = () => setOpen(true);
+    window.addEventListener('cf:open-chat', handler);
+    return () => window.removeEventListener('cf:open-chat', handler);
   }, []);
 
   // Load message history on open
@@ -417,7 +421,7 @@ export default function ChatWidget() {
                 onClick={handleHeaderClick}
                 className="flex items-center gap-3 px-4 py-3 bg-blue-600 cursor-default select-none"
               >
-                <img src="/logo.png" alt="CoinsFlow" className="w-8 h-8 rounded-full object-contain" />
+                <img src="/cflogo.png" alt="CoinsFlow" className="w-8 h-8 rounded-full object-contain" />
                 <div className="flex-1">
                   <div className="text-white font-bold text-[14px]">CoinsFlow Support</div>
                   <div className="text-blue-200 text-[11px]">We typically reply within a few hours</div>

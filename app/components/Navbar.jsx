@@ -122,6 +122,7 @@ export default function Navbar() {
           {/* Flat links */}
           {[
             { label: 'APIs', href: '/apis' },
+            { label: 'News', href: '/news' },
             { label: 'About', href: '/about' },
           ].map((item) => (
             <Link
@@ -169,20 +170,7 @@ export default function Navbar() {
             </form>
           )}
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => window.dispatchEvent(new Event('cf:open-chat'))}
-            aria-label="Support"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold transition-colors flex-shrink-0"
-          >
-            {/* Chat bubble icon */}
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            Support
-          </button>
-
-          {/* Mobile hamburger */}
+          {/* Mobile hamburger */
           <button
             className="lg:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             onClick={() => setMobileOpen((v) => !v)}
@@ -264,25 +252,16 @@ export default function Navbar() {
             </div>
           </div>
           <div className="pt-4 flex flex-col gap-3">
-            {['APIs', 'About'].map((item) => (
+            {['APIs', 'News', 'About'].map((item) => (
               <Link
                 key={item}
-                href={`/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                href={`/${item.toLowerCase()}`}
                 className="text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 {item}
               </Link>
             ))}
-            <button
-              onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event('cf:open-chat')); }}
-              className="flex items-center gap-2 w-fit px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-colors mt-1"
-            >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              Support
-            </button>
           </div>
         </div>
       )}

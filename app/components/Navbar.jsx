@@ -140,7 +140,7 @@ export default function Navbar() {
 
           {/* Compact search bar — hidden on home page (has its own) */}
           {!isHome && (
-            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative flex-1 min-w-0 max-w-2xl">
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative min-w-0 w-full max-w-[220px] lg:max-w-[260px] xl:max-w-[380px]">
               <input
                 type="text"
                 value={query}
@@ -170,7 +170,7 @@ export default function Navbar() {
             </form>
           )}
 
-          {/* Mobile hamburger */
+          {/* Mobile hamburger */}
           <button
             className="lg:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             onClick={() => setMobileOpen((v) => !v)}

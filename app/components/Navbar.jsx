@@ -140,7 +140,7 @@ export default function Navbar() {
 
           {/* Compact search bar — hidden on home page (has its own) */}
           {!isHome && (
-            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative min-w-0 w-full max-w-[220px] lg:max-w-[260px] xl:max-w-[380px]">
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative min-w-0 w-full max-w-[300px] lg:max-w-[220px] xl:max-w-[480px]">
               <input
                 type="text"
                 value={query}

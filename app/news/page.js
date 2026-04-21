@@ -71,7 +71,7 @@ export default function NewsPage() {
 
         {!loading && !error && posts.length === 0 && (
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">ðŸ“°</div>
+            <div className="text-4xl mb-4">📰</div>
             <div className="text-gray-400 text-sm">No articles published yet. Check back soon.</div>
           </div>
         )}
@@ -104,7 +104,7 @@ export default function NewsPage() {
                     </p>
                   )}
                   <div className="mt-3 text-[12px] font-bold text-blue-500 dark:text-blue-400 group-hover:underline">
-                    Read more â†’
+                    Read more &rarr;
                   </div>
                 </Link>
               ))}
@@ -117,7 +117,7 @@ export default function NewsPage() {
                   disabled={page === 1}
                   className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
-                  â€¹ Prev
+                  &lsaquo; Prev
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                   <button
@@ -137,7 +137,7 @@ export default function NewsPage() {
                   disabled={page === totalPages}
                   className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next â€º
+                  Next &rsaquo;
                 </button>
               </div>
             )}

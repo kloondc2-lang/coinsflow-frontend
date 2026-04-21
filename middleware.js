@@ -20,3 +20,4 @@ export const config = {
   // Run on all non-static, non-api paths
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
+ 

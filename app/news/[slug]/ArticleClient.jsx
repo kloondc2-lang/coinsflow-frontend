@@ -162,7 +162,10 @@ export default function ArticleClient({ slug }) {
           </p>
         )}
 
-        <article>{renderMarkdown(post.content)}</article>
+        <article
+          className="article-body"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
 
         <div className="mt-16 pt-8 border-t border-gray-100 dark:border-[#0e2444]">
           <a href="/news" className="text-[13px] font-bold text-blue-500 dark:text-blue-400 hover:underline">

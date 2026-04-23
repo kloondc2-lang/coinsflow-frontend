@@ -19,3 +19,149 @@ html {
   0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3); }
   50% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.7); }
 }
+
+/* ── Article body — HTML content rendered from autopublisher ──────────────── */
+
+.article-body figure.featured-image {
+  margin: 0 0 2rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.dark .article-body figure.featured-image {
+  background: #0e2444;
+}
+.article-body figure.featured-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px 12px 0 0;
+}
+.article-body figure.featured-image figcaption {
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 6px 12px;
+  text-align: right;
+}
+.article-body figure.featured-image figcaption a {
+  color: #9ca3af;
+  text-decoration: underline;
+}
+
+.article-body p.article-intro {
+  font-size: 17px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.8;
+  margin: 0 0 2rem 0;
+  font-style: italic;
+}
+.dark .article-body p.article-intro {
+  color: #d1d5db;
+}
+
+.article-body h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 2.25rem 0 0.75rem 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.dark .article-body h2 {
+  color: #f9fafb;
+}
+
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 1.5rem 0 0.4rem 0;
+  line-height: 1.35;
+}
+.dark .article-body h3 {
+  color: #93c5fd;
+}
+
+.article-body p {
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.85;
+  margin: 0 0 1.25rem 0;
+}
+.dark .article-body p {
+  color: #d1d5db;
+}
+
+.article-body strong {
+  font-weight: 700;
+  color: #111827;
+}
+.dark .article-body strong {
+  color: #f3f4f6;
+}
+
+.article-body em {
+  font-style: italic;
+  color: #4b5563;
+}
+.dark .article-body em {
+  color: #e5e7eb;
+}
+
+.article-body ul.takeaways {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0 1.75rem 0;
+}
+.article-body ul.takeaways li {
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.75;
+  margin-bottom: 0.6rem;
+}
+.dark .article-body ul.takeaways li {
+  color: #d1d5db;
+}
+
+.article-body .faq-item {
+  border-left: 3px solid #3b82f6;
+  padding: 0.25rem 0 0.25rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.dark .article-body .faq-item {
+  border-left-color: #60a5fa;
+}
+.article-body .faq-item h3 {
+  margin-top: 0;
+  color: #1d4ed8;
+}
+.dark .article-body .faq-item h3 {
+  color: #93c5fd;
+}
+.article-body .faq-item p {
+  margin-bottom: 0;
+}
+
+.article-body p.article-sources {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+.dark .article-body p.article-sources {
+  color: #6b7280;
+  border-top-color: #0e2444;
+}
+.article-body p.article-sources a {
+  color: #6b7280;
+  text-decoration: underline;
+}
+.article-body a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.dark .article-body a {
+  color: #60a5fa;
+}

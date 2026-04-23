@@ -147,7 +147,7 @@ export default function ArticleClient({ slug }) {
         )}
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight mb-4">
-          {post.title}
+          {String(post.title ?? '').replace(/<[^>]*>/g, '')}
         </h1>
 
         <div className="flex items-center gap-3 text-[13px] text-gray-400 dark:text-gray-500 mb-8 pb-8 border-b border-gray-100 dark:border-[#0e2444]">
@@ -158,7 +158,7 @@ export default function ArticleClient({ slug }) {
 
         {post.excerpt && (
           <p className="text-[17px] text-gray-600 dark:text-gray-300 leading-relaxed font-medium mb-8 italic">
-            {post.excerpt}
+            {String(post.excerpt ?? '').replace(/<[^>]*>/g, '')}
           </p>
         )}
 

@@ -14,6 +14,10 @@ function timeAgo(iso) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function stripHtml(str) {
+  return String(str ?? '').replace(/<[^>]*>/g, '');
+}
+
 function Skeleton() {
   return (
     <div className="flex flex-col gap-3">
@@ -96,11 +100,11 @@ export default function NewsPage() {
                     </span>
                   </div>
                   <h2 className="text-[16px] font-extrabold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug mb-1.5">
-                    {post.title}
+                    {stripHtml(post.title)}
                   </h2>
                   {post.excerpt && (
                     <p className="text-[13px] text-gray-500 dark:text-gray-500 leading-relaxed line-clamp-2">
-                      {post.excerpt}
+                      {stripHtml(post.excerpt)}
                     </p>
                   )}
                   <div className="mt-3 text-[12px] font-bold text-blue-500 dark:text-blue-400 group-hover:underline">

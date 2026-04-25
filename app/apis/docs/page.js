@@ -360,11 +360,11 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
           <EndpointSection
             id="endpoint-address"
             method="GET"
-            path="/v1/address/ltc/:address"
+            path="/v1/address/ltc/{address}"
             title="Address Lookup"
             desc="Returns balance, transaction count, total received, and total sent for any Litecoin address."
             params={[
-              { name: ':address', type: 'string',  required: true,  desc: 'A valid Litecoin address (L/M/ltc1 format).' },
+              { name: 'address', type: 'string',  required: true,  desc: 'A valid Litecoin address (L/M/ltc1 format).' },
               { name: 'page',     type: 'integer', required: false, desc: 'Page number for transaction history. Default: 1.' },
               { name: 'limit',    type: 'integer', required: false, desc: 'Transactions per page (max 50). Default: 25.' },
             ]}
@@ -391,11 +391,11 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
           <EndpointSection
             id="endpoint-tx"
             method="GET"
-            path="/v1/tx/ltc/:txid"
+            path="/v1/tx/ltc/{txid}"
             title="Transaction Detail"
             desc="Returns full transaction detail including inputs, outputs, fees, block height, and confirmation count."
             params={[
-              { name: ':txid', type: 'string', required: true, desc: 'The 64-character hexadecimal transaction ID.' },
+              { name: 'txid', type: 'string', required: true, desc: 'The 64-character hexadecimal transaction ID.' },
             ]}
             requestExamples={EXAMPLES.tx}
             responseExample={`{
@@ -419,11 +419,11 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
           <EndpointSection
             id="endpoint-block"
             method="GET"
-            path="/v1/block/ltc/:hash"
+            path="/v1/block/ltc/{hash}"
             title="Block Detail"
             desc="Returns block header data, transaction IDs, miner coinbase, and difficulty for a given block hash or height."
             params={[
-              { name: ':hash', type: 'string', required: true, desc: 'Block hash (64-char hex) or block height (integer).' },
+              { name: 'hash', type: 'string', required: true, desc: 'Block hash (64-char hex) or block height (integer).' },
             ]}
             requestExamples={EXAMPLES.block}
             responseExample={`{

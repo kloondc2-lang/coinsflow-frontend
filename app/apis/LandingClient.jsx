@@ -281,9 +281,9 @@ function Counter({ to, suffix = '', prefix = '' }) {
 
 // â”€â”€ Endpoint row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ENDPOINTS = [
-  { method: 'GET', path: '/v1/address/ltc/:address', desc: 'Balance, tx history, total flow', anchor: 'endpoint-address' },
-  { method: 'GET', path: '/v1/tx/ltc/:txid', desc: 'Inputs, outputs, confirmations, fee', anchor: 'endpoint-tx' },
-  { method: 'GET', path: '/v1/block/ltc/:hash', desc: 'Block header, tx list, timestamp', anchor: 'endpoint-block' },
+  { method: 'GET', path: '/v1/address/ltc/{address}', desc: 'Balance, tx history, total flow', anchor: 'endpoint-address' },
+  { method: 'GET', path: '/v1/tx/ltc/{txid}', desc: 'Inputs, outputs, confirmations, fee', anchor: 'endpoint-tx' },
+  { method: 'GET', path: '/v1/block/ltc/{hash}', desc: 'Block header, tx list, timestamp', anchor: 'endpoint-block' },
   { method: 'GET', path: '/v1/blocks/ltc', desc: 'Latest 10 confirmed blocks', anchor: 'endpoint-blocks' },
   { method: 'GET', path: '/v1/price/ltc', desc: 'Live USD price with 24h change', anchor: 'endpoint-price' },
 ];

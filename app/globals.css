@@ -15,6 +15,19 @@ html {
   50% { opacity: 0; }
 }
 
+/* ── CoinsFlow API portal scroll animations ───────────────────────────────── */
+.cf-fade-up-item {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--cf-delay, 0ms);
+}
+.cf-fade-up-item.cf-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @keyframes mempoolPulse {
   0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3); }
   50% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.7); }

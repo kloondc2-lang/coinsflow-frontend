@@ -378,9 +378,9 @@ export default function DashboardClient() {
     const key = apiKey || 'cf_live_your_key_here';
     const examples = {
       '/v1/price/ltc': `curl https://api.coinsflow.net/v1/price/ltc -H "X-API-Key: ${key}"`,
-      '/v1/address/ltc/:address': `curl "https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ" -H "X-API-Key: ${key}"`,
-      '/v1/tx/ltc/:txid': `curl "https://api.coinsflow.net/v1/tx/ltc/e9c20ef2b69bff8e64f5f9eba2b55c0f14cb614eb6c81c33c55fe6527e1dbf85" -H "X-API-Key: ${key}"`,
-      '/v1/block/ltc/:hash': `curl "https://api.coinsflow.net/v1/block/ltc/12a140f5e8254cf062ba3fd6697b5e534fd2a06e2d6fb5b2e40e2ec8f94a8899" -H "X-API-Key: ${key}"`,
+      '/v1/address/ltc/:address': `curl "https://api.coinsflow.net/v1/address/ltc/LMURqs4tNveEY75pzFQpPiBR67fgqUPmgT" -H "X-API-Key: ${key}"`,
+      '/v1/tx/ltc/:txid': `curl "https://api.coinsflow.net/v1/tx/ltc/07de5fb0c9ac8a3380e2fa62cae70e89680c0b87aa4b92acfb1497ddbb6e02f4" -H "X-API-Key: ${key}"`,
+      '/v1/block/ltc/:hash': `curl "https://api.coinsflow.net/v1/block/ltc/f2cb635024c61f14257716e8ae12a376e5d811c22d81066e3003c84ea4d66af2" -H "X-API-Key: ${key}"`,
       '/v1/blocks/ltc': `curl https://api.coinsflow.net/v1/blocks/ltc -H "X-API-Key: ${key}"`,
     };
     navigator.clipboard.writeText(examples[ep] || '');

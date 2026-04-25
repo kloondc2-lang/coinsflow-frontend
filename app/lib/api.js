@@ -1,9 +1,10 @@
 'use client';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.coinsflow.net';
-
+// Explorer calls go through Next.js proxy routes — the internal secret never
+// reaches the browser.  All paths are relative so they resolve to the same
+// origin as the page (coinsflow.net → Next.js server → api.coinsflow.net).
 async function apiFetch(path) {
-  const res = await fetch(`${BASE}${path}`, { cache: 'no-store' });
+  const res = await fetch(path, { cache: 'no-store' });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const err = new Error(body.error || `HTTP ${res.status}`);
@@ -16,27 +17,27 @@ async function apiFetch(path) {
 // ── Litecoin blocks ───────────────────────────────────────────────────────────
 
 export function fetchBlocks(page = 1, limit = 20) {
-  return apiFetch(`/explorer/litecoin/blocks?page=${page}&limit=${limit}`);
+  return apiFetch(`/api/explorer/litecoin/blocks?page=${page}&limit=${limit}`);
 }
 
 export function fetchBlock(hash) {
-  return apiFetch(`/explorer/litecoin/blocks/${hash}`);
+  return apiFetch(`/api/explorer/litecoin/blocks/${hash}`);
 }
 
 export function fetchMempool() {
-  return apiFetch('/explorer/litecoin/blocks/mempool');
+  return apiFetch('/api/explorer/litecoin/blocks/mempool');
 }
 
 // ── Litecoin transactions ─────────────────────────────────────────────────────
 
 export function fetchTx(txid) {
-  return apiFetch(`/explorer/litecoin/tx/${txid}`);
+  return apiFetch(`/api/explorer/litecoin/tx/${txid}`);
 }
 
 // ── Litecoin addresses ────────────────────────────────────────────────────────
 
 export function fetchAddress(address, page = 1, limit = 20) {
-  return apiFetch(`/explorer/litecoin/address/${address}?page=${page}&limit=${limit}`);
+  return apiFetch(`/api/explorer/litecoin/address/${address}?page=${page}&limit=${limit}`);
 }
 
 // ── Smart search — try all 3 endpoints, return first match ────────────────────

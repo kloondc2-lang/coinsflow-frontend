@@ -145,7 +145,7 @@ function TerminalMockup() {
         >
           <div className="flex items-center gap-2 mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <div className="text-[10.5px] text-emerald-400 font-mono font-semibold">200 OK â€” 43ms</div>
+            <div className="text-[10.5px] text-emerald-400 font-mono font-semibold">200 OK — 43ms</div>
           </div>
           <pre className="text-[11.5px] font-mono leading-relaxed text-[#94a3b8] whitespace-pre-wrap">
             {DEMO_RESPONSE.split('\n').map((line, i) => {
@@ -198,26 +198,7 @@ function GridBackground() {
 }
 
 // â”€â”€ Floating ticker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const TICKER_ITEMS = [
-  'Address Lookup', 'Transaction Detail', 'Block Data', 'Live Price Feed',
-  'JSON Responses', 'API Key Auth', 'Litecoin Chain', 'Rate Limiting',
-  'Address Lookup', 'Transaction Detail', 'Block Data', 'Live Price Feed',
-  'JSON Responses', 'API Key Auth', 'Litecoin Chain', 'Rate Limiting',
-];
-function Ticker() {
-  return (
-    <div className="relative overflow-hidden py-3 border-y border-white/[0.05]" style={{ maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
-      <div className="flex gap-8 whitespace-nowrap" style={{ animation: 'cf-ticker 28s linear infinite' }}>
-        {TICKER_ITEMS.map((item, i) => (
-          <span key={i} className="flex items-center gap-2 text-[12px] font-semibold text-[#334155] uppercase tracking-widest flex-shrink-0">
-            <span className="w-1 h-1 rounded-full bg-blue-500/60 flex-shrink-0" />
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 // â”€â”€ Method badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Method({ m }) {
@@ -232,11 +213,11 @@ function Method({ m }) {
 function FeatureCard({ icon, title, desc, className = '', delay = 0 }) {
   return (
     <div
-      className={`cf-fade-up-item group relative p-6 rounded-xl border border-white/[0.07] bg-[#0a1628] hover:border-blue-500/25 transition-all duration-500 overflow-hidden ${className}`}
+      className={`cf-fade-up-item group relative p-6 rounded-xl border border-white/[0.07] bg-[#0a1628] hover:border-white/[0.12] transition-all duration-500 overflow-hidden ${className}`}
       style={{ '--cf-delay': `${delay}ms` }}
     >
-      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'radial-gradient(300px circle at 50% 0%, rgba(59,130,246,0.06), transparent)' }} />
-      <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center text-blue-400 mb-4 group-hover:border-blue-500/30 group-hover:bg-blue-500/15 transition-all duration-300">
+      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'radial-gradient(300px circle at 50% 0%, rgba(255,255,255,0.03), transparent)' }} />
+      <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#94a3b8] mb-4 group-hover:border-white/[0.12] group-hover:bg-white/[0.06] transition-all duration-300">
         {icon}
       </div>
       <h3 className="text-[15px] font-semibold text-[#e2e8f0] mb-1.5">{title}</h3>
@@ -253,7 +234,7 @@ function StepCard({ num, icon, title, desc, delay = 0 }) {
       style={{ '--cf-delay': `${delay}ms` }}
     >
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full border border-white/[0.08] bg-white/[0.04] flex items-center justify-center text-[#64748b] flex-shrink-0">
           {icon}
         </div>
         <span className="text-[11px] font-bold text-[#334155] uppercase tracking-widest">Step {num}</span>
@@ -300,11 +281,11 @@ function Counter({ to, suffix = '', prefix = '' }) {
 
 // â”€â”€ Endpoint row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ENDPOINTS = [
-  { method: 'GET', path: '/v1/address/ltc/:address', desc: 'Balance, tx history, total flow' },
-  { method: 'GET', path: '/v1/tx/ltc/:txid', desc: 'Inputs, outputs, confirmations, fee' },
-  { method: 'GET', path: '/v1/block/ltc/:hash', desc: 'Block header, tx list, timestamp' },
-  { method: 'GET', path: '/v1/blocks/ltc', desc: 'Latest 10 confirmed blocks' },
-  { method: 'GET', path: '/v1/price/ltc', desc: 'Live USD price with 24h change' },
+  { method: 'GET', path: '/v1/address/ltc/:address', desc: 'Balance, tx history, total flow', anchor: 'endpoint-address' },
+  { method: 'GET', path: '/v1/tx/ltc/:txid', desc: 'Inputs, outputs, confirmations, fee', anchor: 'endpoint-tx' },
+  { method: 'GET', path: '/v1/block/ltc/:hash', desc: 'Block header, tx list, timestamp', anchor: 'endpoint-block' },
+  { method: 'GET', path: '/v1/blocks/ltc', desc: 'Latest 10 confirmed blocks', anchor: 'endpoint-blocks' },
+  { method: 'GET', path: '/v1/price/ltc', desc: 'Live USD price with 24h change', anchor: 'endpoint-price' },
 ];
 
 // â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -343,7 +324,7 @@ export default function LandingClient() {
               style={{ '--cf-delay': '0ms' }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              REST API â€” Beta access, free
+              REST API — Beta access, free
             </div>
             <h1
               className="cf-fade-up-item text-[44px] md:text-[58px] font-extrabold tracking-tight leading-[1.04] text-white mb-5"
@@ -387,7 +368,7 @@ export default function LandingClient() {
               <code className="text-[12.5px] font-mono text-[#4a5568] truncate">
                 <span className="text-[#4a5568]">X-API-Key: </span>
                 <span className="text-blue-400">cf_live_</span>
-                <span className="text-[#334155]">â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</span>
+                <span className="text-[#334155]">••••••••••••••••</span>
               </code>
               <span className="ml-auto flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">active</span>
             </div>
@@ -420,22 +401,16 @@ export default function LandingClient() {
         </div>
       </section>
 
-      {/* â”€â”€ Ticker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="mt-8">
-        <Ticker />
-      </div>
-
-      {/* â”€â”€ Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="px-6 md:px-12 max-w-[1280px] mx-auto py-24">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-12 items-start mb-12">
           <div>
-            <span className="cf-fade-up-item text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-3 block">Capabilities</span>
+            <span className="cf-fade-up-item text-[11px] font-bold text-[#64748b] uppercase tracking-widest mb-3 block">Capabilities</span>
             <h2 className="cf-fade-up-item text-[30px] md:text-[36px] font-bold text-white tracking-tight leading-tight">
               Everything you need.
             </h2>
           </div>
           <p className="cf-fade-up-item text-[15.5px] text-[#4a5568] leading-relaxed self-end">
-            Five endpoints covering the complete Litecoin data surface â€” from wallet balances to real-time block confirmations. All accessible from a single API key.
+            Five endpoints covering the complete Litecoin data surface — from wallet balances to real-time block confirmations. All accessible from a single API key.
           </p>
         </div>
 
@@ -452,7 +427,7 @@ export default function LandingClient() {
             className="xl:col-span-4"
             icon={<IconActivity />}
             title="Transaction Detail"
-            desc="Inspect any transaction â€” inputs, outputs, fees, confirmations, and block inclusion time with full I/O resolution."
+            desc="Inspect any transaction — inputs, outputs, fees, confirmations, and block inclusion time with full I/O resolution."
             delay={60}
           />
           <FeatureCard
@@ -478,8 +453,8 @@ export default function LandingClient() {
                 <span className="text-blue-300">"X-API-Key: <span className="text-blue-400">cf_live_...</span>"</span>
               </div>
               <div className="font-mono text-[12px] bg-[#040c1a] border border-white/[0.06] rounded-lg px-4 py-3 text-[#94a3b8] whitespace-nowrap">
-                <span className="text-emerald-400">âœ“ </span>
-                <span className="text-[#4a5568]">200 OK â€” 43ms</span>
+                <span className="text-emerald-400">✓ </span>
+                <span className="text-[#4a5568]">200 OK — 43ms</span>
               </div>
             </div>
             <p className="mt-4 text-[13px] text-[#4a5568]">Pass your key in the request header. No OAuth, no tokens, no complexity.</p>
@@ -498,7 +473,7 @@ export default function LandingClient() {
       {/* â”€â”€ How it works â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-t border-white/[0.05] px-6 md:px-12 max-w-[1280px] mx-auto py-24">
         <div className="mb-14 text-center">
-          <span className="cf-fade-up-item text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-3 block">Getting started</span>
+          <span className="cf-fade-up-item text-[11px] font-bold text-[#64748b] uppercase tracking-widest mb-3 block">Getting started</span>
           <h2 className="cf-fade-up-item text-[30px] md:text-[36px] font-bold text-white tracking-tight">
             From zero to first request in 2 minutes.
           </h2>
@@ -539,7 +514,7 @@ export default function LandingClient() {
       <section className="border-t border-white/[0.05] px-6 md:px-12 max-w-[1280px] mx-auto py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
-            <span className="cf-fade-up-item text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-2 block">API Reference</span>
+            <span className="cf-fade-up-item text-[11px] font-bold text-[#64748b] uppercase tracking-widest mb-2 block">API Reference</span>
             <h2 className="cf-fade-up-item text-[30px] md:text-[36px] font-bold text-white tracking-tight mb-2">
               5 endpoints.
             </h2>
@@ -552,9 +527,10 @@ export default function LandingClient() {
 
         <div className="rounded-xl border border-white/[0.07] overflow-hidden divide-y divide-white/[0.05]">
           {ENDPOINTS.map((ep, i) => (
-            <div
+            <Link
               key={ep.path}
-              className="cf-fade-up-item flex flex-wrap items-center gap-3 md:gap-6 px-5 py-4 bg-[#0a1628] hover:bg-[#0c1d38] transition-all duration-200 group cursor-default"
+              href={`/apis/docs#${ep.anchor}`}
+              className="cf-fade-up-item flex flex-wrap items-center gap-3 md:gap-6 px-5 py-4 bg-[#0a1628] hover:bg-[#0c1d38] transition-all duration-200 group cursor-pointer"
               style={{ '--cf-delay': `${i * 50}ms` }}
             >
               <Method m={ep.method} />
@@ -565,7 +541,7 @@ export default function LandingClient() {
                 {ep.desc}
               </span>
               <svg className="hidden md:block w-3.5 h-3.5 text-[#334155] group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -573,7 +549,7 @@ export default function LandingClient() {
       {/* â”€â”€ Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-t border-white/[0.05] px-6 md:px-12 max-w-[1280px] mx-auto py-24">
         <div className="text-center mb-12">
-          <span className="cf-fade-up-item text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-3 block">Pricing</span>
+          <span className="cf-fade-up-item text-[11px] font-bold text-[#64748b] uppercase tracking-widest mb-3 block">Pricing</span>
           <h2 className="cf-fade-up-item text-[30px] md:text-[36px] font-bold text-white tracking-tight mb-3">
             Free during beta.
           </h2>
@@ -582,18 +558,18 @@ export default function LandingClient() {
           </p>
         </div>
         <div className="max-w-[480px] mx-auto">
-          <div className="cf-fade-up-item relative p-8 rounded-xl border border-blue-500/25 bg-[#0a1628] overflow-hidden" style={{ '--cf-delay': '80ms' }}>
+          <div className="cf-fade-up-item relative p-8 rounded-xl border border-white/[0.1] bg-[#0a1628] overflow-hidden" style={{ '--cf-delay': '80ms' }}>
             {/* Background glow */}
             <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(500px circle at 50% 0%, rgba(59,130,246,0.08), transparent)' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[12px] font-semibold text-blue-400 uppercase tracking-widest">Free</p>
+                <p className="text-[12px] font-semibold text-[#64748b] uppercase tracking-widest">Free</p>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 uppercase tracking-wider">Beta</span>
               </div>
               <p className="text-[44px] font-extrabold text-white tracking-tight mb-1">
                 $0<span className="text-[18px] font-normal text-[#4a5568]">/mo</span>
               </p>
-              <p className="text-[13.5px] text-[#4a5568] mb-7">No credit card required. Cancel never â€” it&apos;s free.</p>
+              <p className="text-[13.5px] text-[#4a5568] mb-7">No credit card required. Cancel never — it&apos;s free.</p>
               <ul className="space-y-3 text-[13.5px] text-[#64748b] mb-8">
                 {[
                   'Unlimited requests during beta',
@@ -604,8 +580,8 @@ export default function LandingClient() {
                   'Email support',
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2.5">
-                    <span className="w-4 h-4 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                      <svg width="8" height="8" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                    <span className="w-4 h-4 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center flex-shrink-0">
+                      <svg width="8" height="8" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                     </span>
                     {f}
                   </li>

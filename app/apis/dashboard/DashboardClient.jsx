@@ -83,7 +83,7 @@ function UsageChart({ data }) {
     return () => clearTimeout(t);
   }, []);
 
-  const W = 600, H = 110;
+  const W = 600, H = 160;
   const padL = 0, padR = 0, padT = 8, padB = 24;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
@@ -119,7 +119,7 @@ function UsageChart({ data }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
-        style={{ height: '110px' }}
+        style={{ height: '160px' }}
         preserveAspectRatio="none"
       >
         <defs>
@@ -204,7 +204,7 @@ function UsageChart({ data }) {
 // ── Stat tile ─────────────────────────────────────────────────────────────────
 function StatTile({ label, value, sub, accent }) {
   return (
-    <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628] hover:border-white/[0.1] transition-all duration-300">
+    <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c] hover:border-white/[0.1] transition-all duration-300">
       <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-3">{label}</p>
       <p className={`text-[28px] font-extrabold tracking-tight ${accent ? 'text-blue-400' : 'text-white'}`}>{value}</p>
       {sub && <p className="text-[11.5px] text-[#4a5568] mt-0.5">{sub}</p>}
@@ -224,6 +224,7 @@ export default function DashboardClient() {
   const [loading, setLoading] = useState(true);
   const [keyVisible, setKeyVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedEp, setCopiedEp] = useState(null);
   const [creating, setCreating] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -282,7 +283,19 @@ export default function DashboardClient() {
 
   // Build chart data — fill in missing days with 0
   const chartData = useMemo(() => {
-    const days = period === '1d' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : 12;
+    if (period === '1d') {
+      const today = new Date().toISOString().split('T')[0];
+      const todayLog = usageLogs.find((l) => l.date === today);
+      const currentHour = new Date().getHours();
+      return Array.from({ length: 24 }, (_, i) => {
+        const d = new Date();
+        d.setHours(i, 0, 0, 0);
+        const label = d.toLocaleString('en-US', { hour: 'numeric', hour12: true });
+        return { label, count: i === currentHour ? (todayLog?.request_count ?? 0) : 0 };
+      });
+    }
+
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 12;
     const isMonths = period === '1y';
 
     if (isMonths) {
@@ -361,6 +374,20 @@ export default function DashboardClient() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function copyExample(ep) {
+    const key = apiKey || 'cf_live_your_key_here';
+    const examples = {
+      '/v1/price/ltc': `curl https://api.coinsflow.net/v1/price/ltc -H "X-API-Key: ${key}"`,
+      '/v1/address/ltc/:address': `curl "https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ" -H "X-API-Key: ${key}"`,
+      '/v1/tx/ltc/:txid': `curl "https://api.coinsflow.net/v1/tx/ltc/e9c20ef2b69bff8e64f5f9eba2b55c0f14cb614eb6c81c33c55fe6527e1dbf85" -H "X-API-Key: ${key}"`,
+      '/v1/block/ltc/:hash': `curl "https://api.coinsflow.net/v1/block/ltc/12a140f5e8254cf062ba3fd6697b5e534fd2a06e2d6fb5b2e40e2ec8f94a8899" -H "X-API-Key: ${key}"`,
+      '/v1/blocks/ltc': `curl https://api.coinsflow.net/v1/blocks/ltc -H "X-API-Key: ${key}"`,
+    };
+    navigator.clipboard.writeText(examples[ep] || '');
+    setCopiedEp(ep);
+    setTimeout(() => setCopiedEp(null), 2000);
+  }
+
   async function signOut() {
     if (supabase) await supabase.auth.signOut();
     router.push('/apis/auth');
@@ -396,7 +423,7 @@ export default function DashboardClient() {
       <div className="max-w-[1280px] mx-auto flex min-h-[calc(100dvh-68px)]">
 
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
-        <aside className="hidden md:flex flex-col w-[210px] flex-shrink-0 border-r border-white/[0.06] py-8 px-3">
+        <aside className="hidden md:flex flex-col w-[180px] flex-shrink-0 border-r border-white/[0.06] py-8 px-3">
           <div className="mb-8 px-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -462,7 +489,7 @@ export default function DashboardClient() {
             <div className="space-y-5" style={{ animation: 'cf-slide-up 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
 
               {/* Stat tiles */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <StatTile
                   label="Total Requests"
                   value={requestCount.toLocaleString()}
@@ -475,20 +502,10 @@ export default function DashboardClient() {
                   sub={<span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/25 uppercase tracking-wider">Beta</span>Unlimited</span>}
                   accent
                 />
-                <StatTile
-                  label="API Status"
-                  value={<span className="flex items-center gap-2">Live<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" /></span>}
-                  sub="All systems operational"
-                />
-                <StatTile
-                  label="Last Used"
-                  value={lastUsed ? new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-                  sub={lastUsed ? new Date(lastUsed).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Never used yet'}
-                />
               </div>
 
               {/* Usage chart */}
-              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c]">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-[13px] font-semibold text-[#e2e8f0]">Request Volume</p>
@@ -517,10 +534,10 @@ export default function DashboardClient() {
                 <UsageChart data={chartData} />
               </div>
 
-              {/* API key quick view + endpoints */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* API key quick view */}
+              <div className="grid grid-cols-1 gap-4">
                 {/* Key preview */}
-                <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c]">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">API Key</p>
                     <button onClick={() => setActiveTab('keys')} className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">Manage</button>
@@ -539,22 +556,10 @@ export default function DashboardClient() {
                   )}
                 </div>
 
-                {/* Quick start */}
-                <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">Quick Start</p>
-                    <Link href="/apis/docs" className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">Full docs →</Link>
-                  </div>
-                  <pre className="text-[11px] font-mono text-[#4a5568] leading-relaxed bg-[#040c1a] rounded-lg px-3 py-2.5 overflow-x-auto whitespace-pre border border-white/[0.05]">
-{`curl api.coinsflow.net/v1/price/ltc \\
-  -H "X-API-Key: ${apiKey ? maskedKey : 'cf_live_...'}"
-`}
-                  </pre>
-                </div>
               </div>
 
               {/* Endpoints */}
-              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c]">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">Available Endpoints</p>
                   <Link href="/apis/docs" className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">View docs →</Link>
@@ -569,7 +574,13 @@ export default function DashboardClient() {
                   ].map((ep) => (
                     <div key={ep} className="flex items-center gap-3 py-2.5 hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors">
                       <span className="text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">GET</span>
-                      <code className="text-[12.5px] font-mono text-[#64748b]">{ep}</code>
+                      <code className="text-[12.5px] font-mono text-[#64748b] flex-1 min-w-0 truncate">{ep}</code>
+                      <button
+                        onClick={() => copyExample(ep)}
+                        className="text-[10.5px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0"
+                      >
+                        {copiedEp === ep ? 'copied!' : 'copy example'}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -581,7 +592,7 @@ export default function DashboardClient() {
           {activeTab === 'keys' && (
             <div className="space-y-5" style={{ animation: 'cf-slide-up 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
               {!apiKey ? (
-                <div className="p-10 rounded-xl border border-dashed border-white/[0.1] bg-[#0a1628] text-center">
+                <div className="p-10 rounded-xl border border-dashed border-white/[0.1] bg-[#020d1c] text-center">
                   <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mx-auto mb-4">
                     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <circle cx="7.5" cy="15.5" r="5.5" /><path d="M21 2l-9.6 9.6M15.5 7.5l3 3" />
@@ -604,7 +615,7 @@ export default function DashboardClient() {
                   </button>
                 </div>
               ) : (
-                <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                <div className="p-6 rounded-xl border border-white/[0.07] bg-[#020d1c]">
                   <div className="flex items-start justify-between mb-5">
                     <div>
                       <p className="text-[15px] font-semibold text-white">{keyName}</p>
@@ -671,7 +682,7 @@ export default function DashboardClient() {
               )}
 
               {/* Usage panel in keys tab */}
-              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c]">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-[13px] font-semibold text-[#e2e8f0]">Usage</p>
                   <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-[#040c1a] border border-white/[0.06]">

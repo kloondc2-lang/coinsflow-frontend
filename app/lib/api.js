@@ -55,21 +55,3 @@ export async function smartSearch(query) {
   }
   return null;
 }
-
-
-// ── Smart search — try all 3 endpoints, return first match ────────────────────
-
-export async function smartSearch(query) {
-  // Try all three in parallel — whichever succeeds first wins
-  const attempts = [
-    fetchTx(query).then((d) => ({ type: 'tx', data: d })),
-    fetchBlock(query).then((d) => ({ type: 'block', data: d })),
-    fetchAddress(query).then((d) => ({ type: 'address', data: d })),
-  ];
-
-  const results = await Promise.allSettled(attempts);
-  for (const r of results) {
-    if (r.status === 'fulfilled') return r.value;
-  }
-  return null;
-}

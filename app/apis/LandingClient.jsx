@@ -312,10 +312,6 @@ export default function LandingClient() {
       <section className="relative overflow-hidden pt-20 pb-6 px-6 md:px-12 max-w-[1280px] mx-auto">
         <GridBackground />
 
-        {/* Ambient orbs */}
-        <div className="pointer-events-none absolute top-[-80px] left-[10%] w-[700px] h-[600px] rounded-full bg-blue-600/[0.07] blur-[140px]" style={{ animation: 'cf-orb-drift 18s ease-in-out infinite' }} />
-        <div className="pointer-events-none absolute top-[200px] right-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[120px]" style={{ animation: 'cf-orb-drift 24s ease-in-out infinite reverse' }} />
-
         <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center relative">
           {/* Left */}
           <div>
@@ -600,7 +596,6 @@ export default function LandingClient() {
 
       {/* â”€â”€ CTA strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-t border-white/[0.05] relative overflow-hidden px-6 md:px-12 py-28 text-center">
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-blue-600/[0.07] blur-[120px]" />
         <div className="relative">
           <h2 className="cf-fade-up-item text-[32px] md:text-[44px] font-extrabold text-white tracking-tight mb-4">
             Ready to build?

@@ -205,7 +205,7 @@ headers = {"X-API-Key": "cf_live_your_key_here"}
 response = requests.get(url, headers=headers)
 data = response.json()
 
-print(f"LTC price: ${data['price_usd']}")
+print(f"LTC price: \${data['price_usd']}")
 print(f"24h change: {data['change_24h']}%")`,
     node: `const response = await fetch(
   "https://api.coinsflow.net/v1/price/ltc",

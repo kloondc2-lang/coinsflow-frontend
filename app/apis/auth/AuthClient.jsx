@@ -23,7 +23,13 @@ export default function AuthClient() {
 
     try {
       if (mode === 'signup') {
-        const { error: err } = await supabase.auth.signUp({ email, password });
+        const { error: err } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/apis/dashboard`,
+          },
+        });
         if (err) throw err;
         setMessage('Account created. Check your email to confirm, then sign in.');
         setMode('login');

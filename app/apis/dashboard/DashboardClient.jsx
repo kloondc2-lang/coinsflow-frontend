@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
@@ -8,28 +8,28 @@ import { supabase } from '../../lib/supabase';
 // ── Inline icons ──────────────────────────────────────────────────────────────
 function IconKey() {
   return (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <circle cx="7.5" cy="15.5" r="5.5" /><path d="M21 2l-9.6 9.6M15.5 7.5l3 3" />
     </svg>
   );
 }
 function IconActivity() {
   return (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   );
 }
 function IconDocs() {
   return (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
     </svg>
   );
 }
 function IconSignOut() {
   return (
-    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
     </svg>
   );
@@ -44,7 +44,9 @@ function IconRefresh({ spinning }) {
 }
 function IconCopy({ copied }) {
   if (copied) return (
-    <svg width="13" height="13" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+    <svg width="13" height="13" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
   );
   return (
     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -65,20 +67,147 @@ function IconEye({ open }) {
   );
 }
 
-// ── Generate a cryptographically secure API key ───────────────────────────────
+// ── Generate secure API key ───────────────────────────────────────────────────
 function generateApiKey() {
   const arr = new Uint8Array(32);
   window.crypto.getRandomValues(arr);
   return 'cf_live_' + Array.from(arr).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ── Stat card ─────────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub }) {
+// ── Usage SVG Area Chart ──────────────────────────────────────────────────────
+function UsageChart({ data }) {
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setRendered(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  const W = 600, H = 110;
+  const padL = 0, padR = 0, padT = 8, padB = 24;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const maxVal = Math.max(...data.map((d) => d.count), 1);
+
+  const pts = data.map((d, i) => ({
+    x: padL + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW),
+    y: padT + chartH - (d.count / maxVal) * chartH,
+    ...d,
+  }));
+
+  const smooth = (points) => {
+    if (points.length < 2) return points.map((p) => `L ${p.x} ${p.y}`).join(' ');
+    return points.map((p, i, arr) => {
+      if (i === 0) return `M ${p.x} ${p.y}`;
+      const prev = arr[i - 1];
+      const cpX1 = prev.x + (p.x - prev.x) * 0.4;
+      const cpX2 = p.x - (p.x - prev.x) * 0.4;
+      return `C ${cpX1} ${prev.y}, ${cpX2} ${p.y}, ${p.x} ${p.y}`;
+    }).join(' ');
+  };
+
+  const linePath = smooth(pts);
+  const lastPt = pts[pts.length - 1];
+  const firstPt = pts[0];
+  const areaPath = `${linePath} L ${lastPt.x} ${padT + chartH} L ${firstPt.x} ${padT + chartH} Z`;
+
+  const isEmpty = maxVal <= 0 || data.every((d) => d.count === 0);
+
   return (
-    <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
-      <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-2">{label}</p>
-      <p className="text-[28px] font-extrabold text-white tracking-tight">{value}</p>
-      {sub && <p className="text-[12px] text-[#4a5568] mt-0.5">{sub}</p>}
+    <div className="relative">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ height: '110px' }}
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity={isEmpty ? "0.04" : "0.18"} />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id="chartClip">
+            <rect
+              x="0" y="0" width={W} height={H}
+              style={{
+                transform: rendered ? 'scaleX(1)' : 'scaleX(0)',
+                transformOrigin: 'left',
+                transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            />
+          </clipPath>
+        </defs>
+
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75, 1].map((frac) => (
+          <line
+            key={frac}
+            x1={padL} y1={padT + chartH * (1 - frac)}
+            x2={W - padR} y2={padT + chartH * (1 - frac)}
+            stroke="rgba(255,255,255,0.04)" strokeWidth="1"
+          />
+        ))}
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#chartFill)" clipPath="url(#chartClip)" />
+
+        {/* Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={isEmpty ? 'rgba(59,130,246,0.15)' : '#3b82f6'}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          clipPath="url(#chartClip)"
+        />
+
+        {/* Data points */}
+        {!isEmpty && pts.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x} cy={p.y} r="3"
+            fill="#020d1c" stroke="#3b82f6" strokeWidth="1.5"
+            style={{ opacity: rendered ? 1 : 0, transition: `opacity 0.3s ${0.8 + i * 0.05}s` }}
+          />
+        ))}
+
+        {/* X-axis labels */}
+        {data.map((d, i) => {
+          const x = padL + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW);
+          const show = data.length <= 10 || i % Math.ceil(data.length / 8) === 0 || i === data.length - 1;
+          if (!show) return null;
+          return (
+            <text
+              key={i}
+              x={x} y={H - 2}
+              textAnchor="middle"
+              fontSize="8"
+              fill="rgba(74,85,104,0.8)"
+              fontFamily="ui-monospace, monospace"
+            >
+              {d.label}
+            </text>
+          );
+        })}
+      </svg>
+
+      {isEmpty && (
+        <div className="absolute inset-0 flex items-center justify-center pb-4">
+          <p className="text-[12px] text-[#334155] font-mono">no data yet — start making requests</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Stat tile ─────────────────────────────────────────────────────────────────
+function StatTile({ label, value, sub, accent }) {
+  return (
+    <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628] hover:border-white/[0.1] transition-all duration-300">
+      <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-3">{label}</p>
+      <p className={`text-[28px] font-extrabold tracking-tight ${accent ? 'text-blue-400' : 'text-white'}`}>{value}</p>
+      {sub && <p className="text-[11.5px] text-[#4a5568] mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -91,12 +220,14 @@ export default function DashboardClient() {
   const [keyName, setKeyName] = useState('Default Key');
   const [requestCount, setRequestCount] = useState(0);
   const [lastUsed, setLastUsed] = useState(null);
+  const [usageLogs, setUsageLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [keyVisible, setKeyVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [period, setPeriod] = useState('7d');
 
   const loadData = useCallback(async (uid) => {
     if (!supabase) return;
@@ -114,22 +245,77 @@ export default function DashboardClient() {
       setRequestCount(data.request_count ?? 0);
       setLastUsed(data.last_used_at);
     }
-  }, []);
+    // Try loading usage logs (table may not exist yet — handle gracefully)
+    try {
+      const days = period === '1d' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : 365;
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+      const { data: logs } = await supabase
+        .from('api_usage')
+        .select('date, request_count')
+        .eq('user_id', uid)
+        .gte('date', since.toISOString().split('T')[0])
+        .order('date', { ascending: true });
+      if (logs) setUsageLogs(logs);
+    } catch (_) {
+      // api_usage table doesn't exist yet — skip
+    }
+  }, [period]);
 
   useEffect(() => {
     if (!supabase) { router.push('/apis/auth'); return; }
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/apis/auth'); return; }
       setUser(session.user);
       loadData(session.user.id).finally(() => setLoading(false));
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) { router.push('/apis/auth'); }
     });
     return () => subscription.unsubscribe();
   }, [router, loadData]);
+
+  // Re-fetch usage when period changes
+  useEffect(() => {
+    if (user) loadData(user.id);
+  }, [period, user, loadData]);
+
+  // Build chart data — fill in missing days with 0
+  const chartData = useMemo(() => {
+    const days = period === '1d' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : 12;
+    const isMonths = period === '1y';
+
+    if (isMonths) {
+      return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - (11 - i));
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const found = usageLogs.find((l) => l.date?.startsWith(key));
+        return {
+          label: d.toLocaleString('en-US', { month: 'short' }),
+          count: found?.request_count ?? 0,
+        };
+      });
+    }
+
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (days - 1 - i));
+      const key = d.toISOString().split('T')[0];
+      const found = usageLogs.find((l) => l.date === key);
+      const label = days === 1
+        ? d.toLocaleString('en-US', { hour: 'numeric', hour12: true })
+        : days <= 7
+        ? d.toLocaleString('en-US', { weekday: 'short' })
+        : String(d.getDate());
+      return { label, count: found?.request_count ?? 0 };
+    });
+  }, [usageLogs, period]);
+
+  const periodTotal = useMemo(
+    () => chartData.reduce((s, d) => s + d.count, 0),
+    [chartData]
+  );
 
   async function createKey() {
     if (!supabase || !user) return;
@@ -137,17 +323,10 @@ export default function DashboardClient() {
     try {
       const newKey = generateApiKey();
       const { error } = await supabase.from('api_keys').insert({
-        user_id: user.id,
-        api_key: newKey,
-        name: 'Default Key',
-        is_active: true,
-        request_count: 0,
+        user_id: user.id, api_key: newKey, name: 'Default Key', is_active: true, request_count: 0,
       });
       if (error) throw error;
-      setApiKey(newKey);
-      setRequestCount(0);
-      setLastUsed(null);
-      setKeyVisible(true);
+      setApiKey(newKey); setRequestCount(0); setLastUsed(null); setKeyVisible(true);
     } catch (err) {
       console.error(err);
     } finally {
@@ -161,22 +340,13 @@ export default function DashboardClient() {
     if (!confirmed) return;
     setRegenerating(true);
     try {
-      // Deactivate all existing keys
       await supabase.from('api_keys').update({ is_active: false }).eq('user_id', user.id);
-      // Create new key
       const newKey = generateApiKey();
       const { error } = await supabase.from('api_keys').insert({
-        user_id: user.id,
-        api_key: newKey,
-        name: keyName,
-        is_active: true,
-        request_count: 0,
+        user_id: user.id, api_key: newKey, name: keyName, is_active: true, request_count: 0,
       });
       if (error) throw error;
-      setApiKey(newKey);
-      setRequestCount(0);
-      setLastUsed(null);
-      setKeyVisible(true);
+      setApiKey(newKey); setRequestCount(0); setLastUsed(null); setKeyVisible(true);
     } catch (err) {
       console.error(err);
     } finally {
@@ -197,21 +367,28 @@ export default function DashboardClient() {
   }
 
   const maskedKey = apiKey
-    ? apiKey.slice(0, 12) + '••••••••••••••••••••••••••••••••' + apiKey.slice(-4)
+    ? apiKey.slice(0, 12) + '••••••••••••••••••••••••••' + apiKey.slice(-4)
     : '';
 
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-[#020d1c] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   const NAV_ITEMS = [
     { id: 'overview', icon: <IconActivity />, label: 'Overview' },
-    { id: 'keys', icon: <IconKey />, label: 'API Keys' },
-    { id: 'docs', icon: <IconDocs />, label: 'Docs', href: '/apis/docs' },
+    { id: 'keys',     icon: <IconKey />,      label: 'API Keys' },
+    { id: 'docs',     icon: <IconDocs />,     label: 'Docs',    href: '/apis/docs' },
+  ];
+
+  const PERIODS = [
+    { id: '1d',  label: '1D' },
+    { id: '7d',  label: '7D' },
+    { id: '30d', label: '30D' },
+    { id: '1y',  label: '1Y' },
   ];
 
   return (
@@ -219,10 +396,13 @@ export default function DashboardClient() {
       <div className="max-w-[1280px] mx-auto flex min-h-[calc(100dvh-68px)]">
 
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
-        <aside className="hidden md:flex flex-col w-[220px] flex-shrink-0 border-r border-white/[0.06] py-8 px-4">
-          <div className="mb-8">
-            <p className="text-[10px] font-semibold text-[#334155] uppercase tracking-widest px-3 mb-1">Workspace</p>
-            <p className="text-[13px] font-semibold text-[#64748b] px-3 truncate">{user?.email}</p>
+        <aside className="hidden md:flex flex-col w-[210px] flex-shrink-0 border-r border-white/[0.06] py-8 px-3">
+          <div className="mb-8 px-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-semibold text-[#334155] uppercase tracking-widest">Workspace</span>
+            </div>
+            <p className="text-[12.5px] font-medium text-[#4a5568] truncate">{user?.email}</p>
           </div>
           <nav className="flex flex-col gap-0.5 flex-1">
             {NAV_ITEMS.map((item) =>
@@ -238,7 +418,7 @@ export default function DashboardClient() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors text-left w-full ${
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all text-left w-full ${
                     activeTab === item.id
                       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       : 'text-[#4a5568] hover:text-[#94a3b8] hover:bg-white/[0.04]'
@@ -260,108 +440,138 @@ export default function DashboardClient() {
         {/* ── Main content ─────────────────────────────────────────────── */}
         <main className="flex-1 min-w-0 px-6 md:px-8 xl:px-12 py-8">
 
-          {/* Header */}
+          {/* Page header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-[22px] font-bold text-white tracking-tight">
+              <h1 className="text-[20px] font-bold text-white tracking-tight">
                 {activeTab === 'overview' ? 'Overview' : 'API Keys'}
               </h1>
-              <p className="text-[13px] text-[#4a5568] mt-0.5">
-                {activeTab === 'overview' ? 'Your API usage at a glance.' : 'Manage your API credentials.'}
+              <p className="text-[12.5px] text-[#4a5568] mt-0.5">
+                {activeTab === 'overview'
+                  ? `Welcome back, ${user?.email?.split('@')[0]}`
+                  : 'Manage your API credentials'}
               </p>
             </div>
-            {/* Mobile sign out */}
             <button onClick={signOut} className="md:hidden flex items-center gap-1.5 text-[12px] text-[#334155] hover:text-red-400 transition-colors">
               <IconSignOut /> Sign out
             </button>
           </div>
 
-          {/* ── Overview tab ──────────────────────────────────────────── */}
+          {/* ── Overview ──────────────────────────────────────────────── */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <StatCard
+            <div className="space-y-5" style={{ animation: 'cf-slide-up 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
+
+              {/* Stat tiles */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatTile
                   label="Total Requests"
                   value={requestCount.toLocaleString()}
                   sub="All time"
+                  accent={false}
                 />
-                <StatCard
+                <StatTile
                   label="Plan"
                   value="Free"
-                  sub="500 req / day"
+                  sub={<span className="flex items-center gap-1"><span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/25 uppercase tracking-wider">Beta</span>Unlimited</span>}
+                  accent
                 />
-                <StatCard
+                <StatTile
+                  label="API Status"
+                  value={<span className="flex items-center gap-2">Live<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" /></span>}
+                  sub="All systems operational"
+                />
+                <StatTile
                   label="Last Used"
                   value={lastUsed ? new Date(lastUsed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-                  sub={lastUsed ? new Date(lastUsed).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                  sub={lastUsed ? new Date(lastUsed).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Never used yet'}
                 />
               </div>
 
-              {/* API Key preview */}
-              <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+              {/* Usage chart */}
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-0.5">Your API Key</p>
-                    <p className="text-[13px] text-[#4a5568]">{keyName}</p>
+                    <p className="text-[13px] font-semibold text-[#e2e8f0]">Request Volume</p>
+                    <p className="text-[11.5px] text-[#4a5568] mt-0.5">
+                      <span className="font-mono text-[#94a3b8] font-semibold">{periodTotal.toLocaleString()}</span>
+                      {' '}requests this period
+                    </p>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('keys')}
-                    className="text-[12px] text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-                  >
-                    Manage
-                  </button>
+                  {/* Period selector */}
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-[#040c1a] border border-white/[0.06]">
+                    {PERIODS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPeriod(p.id)}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                          period === p.id
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-[#4a5568] hover:text-[#94a3b8]'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {apiKey ? (
-                  <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-[#040c1a] border border-white/[0.06] font-mono text-[12.5px] text-[#94a3b8]">
-                    <span className="flex-1 truncate">{maskedKey}</span>
-                    <button onClick={copyKey} className="flex-shrink-0 text-[#4a5568] hover:text-[#94a3b8] transition-colors">
-                      <IconCopy copied={copied} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setActiveTab('keys')}
-                    className="text-[13px] text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-                  >
-                    Create your first key →
-                  </button>
-                )}
+                <UsageChart data={chartData} />
               </div>
 
-              {/* Quick endpoints */}
-              <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-[14px] font-semibold text-[#e2e8f0]">Available endpoints</p>
-                  <Link href="/apis/docs" className="text-[12px] text-blue-400 hover:text-blue-300 font-semibold">View docs →</Link>
+              {/* API key quick view + endpoints */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Key preview */}
+                <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">API Key</p>
+                    <button onClick={() => setActiveTab('keys')} className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">Manage</button>
+                  </div>
+                  {apiKey ? (
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#040c1a] border border-white/[0.06] font-mono text-[12px] text-[#64748b]">
+                      <span className="flex-1 truncate">{maskedKey}</span>
+                      <button onClick={copyKey} className="flex-shrink-0 text-[#4a5568] hover:text-[#94a3b8] transition-colors">
+                        <IconCopy copied={copied} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setActiveTab('keys')} className="text-[13px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                      Create your first key →
+                    </button>
+                  )}
                 </div>
-                <div className="space-y-2">
+
+                {/* Quick start */}
+                <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">Quick Start</p>
+                    <Link href="/apis/docs" className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">Full docs →</Link>
+                  </div>
+                  <pre className="text-[11px] font-mono text-[#4a5568] leading-relaxed bg-[#040c1a] rounded-lg px-3 py-2.5 overflow-x-auto whitespace-pre border border-white/[0.05]">
+{`curl api.coinsflow.net/v1/price/ltc \\
+  -H "X-API-Key: ${apiKey ? maskedKey : 'cf_live_...'}"
+`}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Endpoints */}
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[12px] font-semibold text-[#334155] uppercase tracking-widest">Available Endpoints</p>
+                  <Link href="/apis/docs" className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold transition-colors">View docs →</Link>
+                </div>
+                <div className="divide-y divide-white/[0.04]">
                   {[
+                    '/v1/price/ltc',
                     '/v1/address/ltc/:address',
                     '/v1/tx/ltc/:txid',
                     '/v1/block/ltc/:hash',
                     '/v1/blocks/ltc',
-                    '/v1/price/ltc',
                   ].map((ep) => (
-                    <div key={ep} className="flex items-center gap-3 py-2 border-t border-white/[0.04]">
-                      <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GET</span>
+                    <div key={ep} className="flex items-center gap-3 py-2.5 hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors">
+                      <span className="text-[9.5px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">GET</span>
                       <code className="text-[12.5px] font-mono text-[#64748b]">{ep}</code>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Quick start */}
-              <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
-                <p className="text-[14px] font-semibold text-[#e2e8f0] mb-3">Quick start</p>
-                <div className="rounded-lg border border-white/[0.06] overflow-hidden">
-                  <div className="px-4 py-2 bg-[#040c1a] border-b border-white/[0.06]">
-                    <span className="text-[10px] font-mono text-[#334155] uppercase tracking-wider">bash</span>
-                  </div>
-                  <pre className="px-4 py-3 bg-[#030b17] text-[11.5px] font-mono text-[#64748b] leading-relaxed overflow-x-auto whitespace-pre">
-                    {`curl https://api.coinsflow.net/v1/price/ltc \\
-  -H "X-API-Key: ${apiKey ? maskedKey : 'cf_live_your_key_here'}"`}
-                  </pre>
                 </div>
               </div>
             </div>
@@ -369,16 +579,17 @@ export default function DashboardClient() {
 
           {/* ── Keys tab ──────────────────────────────────────────────── */}
           {activeTab === 'keys' && (
-            <div className="space-y-6">
+            <div className="space-y-5" style={{ animation: 'cf-slide-up 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
               {!apiKey ? (
-                // No key yet — create
-                <div className="p-8 rounded-xl border border-dashed border-white/[0.1] bg-[#0a1628] text-center">
+                <div className="p-10 rounded-xl border border-dashed border-white/[0.1] bg-[#0a1628] text-center">
                   <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mx-auto mb-4">
-                    <IconKey />
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <circle cx="7.5" cy="15.5" r="5.5" /><path d="M21 2l-9.6 9.6M15.5 7.5l3 3" />
+                    </svg>
                   </div>
                   <h3 className="text-[16px] font-semibold text-white mb-2">No API key yet</h3>
                   <p className="text-[13.5px] text-[#4a5568] mb-6 max-w-[340px] mx-auto">
-                    Generate your free API key to start making requests to the CoinsFlow blockchain API.
+                    Generate your free API key to start making requests.
                   </p>
                   <button
                     onClick={createKey}
@@ -393,41 +604,56 @@ export default function DashboardClient() {
                   </button>
                 </div>
               ) : (
-                // Has key — show + manage
                 <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
                   <div className="flex items-start justify-between mb-5">
                     <div>
-                      <p className="text-[16px] font-semibold text-white">{keyName}</p>
+                      <p className="text-[15px] font-semibold text-white">{keyName}</p>
                       <p className="text-[12px] text-[#4a5568] mt-0.5">
                         {requestCount.toLocaleString()} total requests
                         {lastUsed ? ` · Last used ${new Date(lastUsed).toLocaleDateString()}` : ' · Never used'}
                       </p>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Active
+                    </span>
                   </div>
 
                   {/* Key display */}
-                  <div className="flex items-center gap-2 px-3.5 py-3 rounded-lg bg-[#040c1a] border border-white/[0.06] mb-4">
+                  <div className="flex items-center gap-2 px-3.5 py-3 rounded-lg bg-[#040c1a] border border-white/[0.06] mb-5">
                     <span className="flex-1 font-mono text-[12.5px] text-[#94a3b8] truncate">
                       {keyVisible ? apiKey : maskedKey}
                     </span>
                     <button
                       onClick={() => setKeyVisible((v) => !v)}
                       className="flex-shrink-0 text-[#4a5568] hover:text-[#94a3b8] transition-colors p-1"
-                      title={keyVisible ? 'Hide key' : 'Reveal key'}
                     >
                       <IconEye open={keyVisible} />
                     </button>
                     <button
                       onClick={copyKey}
                       className="flex-shrink-0 text-[#4a5568] hover:text-[#94a3b8] transition-colors p-1"
-                      title="Copy key"
                     >
                       <IconCopy copied={copied} />
                     </button>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 pt-4 border-t border-white/[0.05]">
+                  {/* Plan info */}
+                  <div className="flex items-center justify-between py-3 border-y border-white/[0.05] mb-5">
+                    <div>
+                      <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-0.5">Plan</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13.5px] font-semibold text-[#e2e8f0]">Free</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/25 uppercase tracking-wider">Beta</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-0.5">Limit</p>
+                      <p className="text-[13.5px] font-semibold text-emerald-400">Unlimited</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={regenerateKey}
                       disabled={regenerating}
@@ -438,43 +664,43 @@ export default function DashboardClient() {
                     </button>
                   </div>
 
-                  <div className="mt-4 p-3.5 rounded-lg border border-yellow-500/15 bg-yellow-500/5 text-[12.5px] text-[#64748b] leading-relaxed">
+                  <div className="mt-5 p-3.5 rounded-lg border border-yellow-500/15 bg-yellow-500/5 text-[12.5px] text-[#64748b] leading-relaxed">
                     <span className="text-yellow-400 font-semibold">Keep this private.</span> Never commit your API key to version control or expose it in client-side code.
                   </div>
                 </div>
               )}
 
-              {/* Usage section */}
-              <div className="p-6 rounded-xl border border-white/[0.07] bg-[#0a1628]">
-                <p className="text-[14px] font-semibold text-white mb-4">Usage</p>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Usage panel in keys tab */}
+              <div className="p-5 rounded-xl border border-white/[0.07] bg-[#0a1628]">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[13px] font-semibold text-[#e2e8f0]">Usage</p>
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-[#040c1a] border border-white/[0.06]">
+                    {PERIODS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPeriod(p.id)}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                          period === p.id
+                            ? 'bg-blue-600 text-white'
+                            : 'text-[#4a5568] hover:text-[#94a3b8]'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 mb-4">
                   <div>
-                    <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-1">Total requests</p>
-                    <p className="text-[24px] font-extrabold text-white">{requestCount.toLocaleString()}</p>
+                    <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-0.5">This period</p>
+                    <p className="text-[22px] font-extrabold text-white font-mono">{periodTotal.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-1">Plan limit</p>
-                    <p className="text-[24px] font-extrabold text-white">500<span className="text-[14px] font-normal text-[#4a5568]">/day</span></p>
+                    <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-0.5">All time</p>
+                    <p className="text-[22px] font-extrabold text-white font-mono">{requestCount.toLocaleString()}</p>
                   </div>
                 </div>
-                {/* Progress bar */}
-                <div className="mt-5">
-                  <div className="flex justify-between text-[11px] text-[#4a5568] mb-1.5">
-                    <span>Daily usage</span>
-                    <span>0 / 500</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-blue-500 transition-all duration-500" style={{ width: '0%' }} />
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-white/[0.05]">
-                  <p className="text-[12.5px] text-[#4a5568]">
-                    Need more requests?{' '}
-                    <Link href="/apis" className="text-blue-400 hover:text-blue-300 font-semibold">
-                      Upgrade to Pro →
-                    </Link>
-                  </p>
-                </div>
+                <UsageChart data={chartData} />
               </div>
             </div>
           )}

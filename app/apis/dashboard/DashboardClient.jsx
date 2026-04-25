@@ -380,7 +380,7 @@ export default function DashboardClient() {
       '/v1/price/ltc': `curl https://api.coinsflow.net/v1/price/ltc -H "X-API-Key: ${key}"`,
       '/v1/address/ltc/{address}': `curl "https://api.coinsflow.net/v1/address/ltc/LMURqs4tNveEY75pzFQpPiBR67fgqUPmgT" -H "X-API-Key: ${key}"`,
       '/v1/tx/ltc/{txid}': `curl "https://api.coinsflow.net/v1/tx/ltc/07de5fb0c9ac8a3380e2fa62cae70e89680c0b87aa4b92acfb1497ddbb6e02f4" -H "X-API-Key: ${key}"`,
-      '/v1/block/ltc/{hash}': `curl "https://api.coinsflow.net/v1/block/ltc/f2cb635024c61f14257716e8ae12a376e5d811c22d81066e3003c84ea4d66af2" -H "X-API-Key: ${key}"`,`
+      '/v1/block/ltc/{hash}': `curl "https://api.coinsflow.net/v1/block/ltc/f2cb635024c61f14257716e8ae12a376e5d811c22d81066e3003c84ea4d66af2" -H "X-API-Key: ${key}"`,
       '/v1/blocks/ltc': `curl https://api.coinsflow.net/v1/blocks/ltc -H "X-API-Key: ${key}"`,
     };
     navigator.clipboard.writeText(examples[ep] || '');

@@ -183,6 +183,105 @@ blocks.forEach((b) => {
   console.log(\`Height \${b.height}: \${b.tx_count} txs\`);
 });`,
   },
+  invoiceCreate: {
+    curl: `curl -X POST https://api.coinsflow.net/invoices/create \\
+  -H "X-API-Key: cf_live_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"amount_ltc":0.01,"expires_in_minutes":60,"description":"Order #1234"}'`,
+    python: `import requests
+
+url = "https://api.coinsflow.net/invoices/create"
+headers = {
+    "X-API-Key": "cf_live_your_key_here",
+    "Content-Type": "application/json",
+}
+payload = {
+    "amount_ltc": 0.01,
+    "expires_in_minutes": 60,
+    "description": "Order #1234",
+}
+
+res = requests.post(url, json=payload, headers=headers)
+data = res.json()
+
+print(f"Invoice ID: {data['invoice_id']}")
+print(f"Pay to: {data['ltc_address']}")
+print(f"Invoice URL: {data['invoice_url']}")`,
+    node: `const res = await fetch("https://api.coinsflow.net/invoices/create", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "cf_live_your_key_here",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    amount_ltc: 0.01,
+    expires_in_minutes: 60,
+    description: "Order #1234",
+  }),
+});
+
+const data = await res.json();
+console.log(\`Invoice ID: \${data.invoice_id}\`);
+console.log(\`Pay to: \${data.ltc_address}\`);
+console.log(\`Invoice URL: \${data.invoice_url}\`);`,
+  },
+  balance: {
+    curl: `curl https://api.coinsflow.net/balance \\
+  -H "X-API-Key: cf_live_your_key_here"`,
+    python: `import requests
+
+url = "https://api.coinsflow.net/balance"
+headers = {"X-API-Key": "cf_live_your_key_here"}
+
+res = requests.get(url, headers=headers)
+data = res.json()
+
+print(f"Balance: {data['balance_ltc']} LTC")
+print(f"USD value: ${data['balance_usd']:.2f}")`,
+    node: `const res = await fetch("https://api.coinsflow.net/balance", {
+  headers: { "X-API-Key": "cf_live_your_key_here" },
+});
+
+const data = await res.json();
+console.log(\`Balance: \${data.balance_ltc} LTC\`);
+console.log(\`USD value: $\${data.balance_usd.toFixed(2)}\`);`,
+  },
+  payout: {
+    curl: `curl -X POST https://api.coinsflow.net/payout \\
+  -H "X-API-Key: cf_live_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"to_address":"LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ","amount_ltc":0.005}'`,
+    python: `import requests
+
+url = "https://api.coinsflow.net/payout"
+headers = {
+    "X-API-Key": "cf_live_your_key_here",
+    "Content-Type": "application/json",
+}
+payload = {
+    "to_address": "LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ",
+    "amount_ltc": 0.005,
+}
+
+res = requests.post(url, json=payload, headers=headers)
+data = res.json()
+
+print(f"TX Hash: {data['tx_hash']}")`,
+    node: `const res = await fetch("https://api.coinsflow.net/payout", {
+  method: "POST",
+  headers: {
+    "X-API-Key": "cf_live_your_key_here",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    to_address: "LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ",
+    amount_ltc: 0.005,
+  }),
+});
+
+const data = await res.json();
+console.log(\`TX Hash: \${data.tx_hash}\`);`,
+  },
   price: {
     curl: `curl https://api.coinsflow.net/v1/price/ltc \\
   -H "X-API-Key: cf_live_your_key_here"`,
@@ -493,6 +592,80 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
   "price_usd": 87.43,
   "change_24h": -2.14,
   "updated_at": 1714003260
+}`}
+          />
+
+          {/* ── Payments Section Header ─────────────────────── */}
+          <section id="payments" className="pt-16 border-t border-white/[0.06] mt-16">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Payment Gateway</span>
+            </div>
+            <h2 className="text-[22px] font-bold text-white mb-3">Payment Gateway</h2>
+            <p className="text-[14.5px] text-[#64748b] leading-relaxed max-w-[600px]">
+              Accept Litecoin payments directly into your balance. Create invoices, track payment status in real time, and withdraw to any LTC address.
+            </p>
+          </section>
+
+          {/* ── Endpoint: Create Invoice ──────────────────────────── */}
+          <EndpointSection
+            id="endpoint-invoice-create"
+            method="POST"
+            path="/invoices/create"
+            title="Create Invoice"
+            desc="Generate a new Litecoin payment invoice with a unique deposit address. The invoice automatically tracks incoming payments and updates status to confirmed once received."
+            params={[
+              { name: 'amount_ltc',          type: 'number',  required: true,  desc: 'Amount in LTC to request. Must be greater than 0.' },
+              { name: 'expires_in_minutes',  type: 'integer', required: false, desc: 'Minutes until invoice expires. Default: 60.' },
+              { name: 'description',         type: 'string',  required: false, desc: 'Optional description shown on the hosted invoice page.' },
+              { name: 'tolerance_percent',   type: 'number',  required: false, desc: 'Underpayment tolerance %. Default: 2.' },
+            ]}
+            requestExamples={EXAMPLES.invoiceCreate}
+            responseExample={`{
+  "invoice_id": "1cd4fbb8-9468-4685-b03e-ae22975e771e",
+  "ltc_address": "LSngLEpvKjCiKkggXrtEJrrddWgiDhHxLB",
+  "amount_ltc": 0.01,
+  "tolerance_percent": 2,
+  "status": "pending",
+  "expires_at": "2024-04-26T17:50:52.82+00:00",
+  "created_at": "2024-04-26T16:50:52.95+00:00",
+  "invoice_url": "https://www.coinsflow.net/invoice/1cd4fbb8-..."
+}`}
+          />
+
+          {/* ── Endpoint: Balance ─────────────────────────────────── */}
+          <EndpointSection
+            id="endpoint-balance"
+            method="GET"
+            path="/balance"
+            title="Get Balance"
+            desc="Returns your current confirmed LTC balance and its USD equivalent. Balance is credited automatically when invoices reach confirmed status."
+            params={[]}
+            requestExamples={EXAMPLES.balance}
+            responseExample={`{
+  "balance_ltc": 0.05241800,
+  "balance_usd": 4.58,
+  "updated_at": "2024-04-26T18:03:14+00:00"
+}`}
+          />
+
+          {/* ── Endpoint: Payout ──────────────────────────────────── */}
+          <EndpointSection
+            id="endpoint-payout"
+            method="POST"
+            path="/payout"
+            title="Send Payout"
+            desc="Withdraw LTC from your balance to any Litecoin address. The amount is deducted from your balance and broadcast to the network."
+            params={[
+              { name: 'to_address',  type: 'string', required: true, desc: 'Destination Litecoin address (L/M/ltc1 format).' },
+              { name: 'amount_ltc', type: 'number', required: true, desc: 'Amount in LTC to send. Must not exceed your balance.' },
+            ]}
+            requestExamples={EXAMPLES.payout}
+            responseExample={`{
+  "payout_id": "a7f3c9e2-1b4d-4c8a-9d2f-3e7b1a5f8c4d",
+  "tx_hash": "4a2d9f1e3c8b7a6d...",
+  "to_address": "LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ",
+  "amount_ltc": 0.005,
+  "status": "sent"
 }`}
           />
 

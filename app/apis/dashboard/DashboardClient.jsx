@@ -34,8 +34,14 @@ function IconShield() {
     </svg>
   );
 }
-function IconSignOut() {
+function IconPayments() {
   return (
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  );
+}
+function IconSignOut() {  return (
     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
     </svg>
@@ -215,6 +221,231 @@ function StatTile({ label, value, sub, accent }) {
       <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-3">{label}</p>
       <p className={`text-[28px] font-extrabold tracking-tight ${accent ? 'text-blue-400' : 'text-white'}`}>{value}</p>
       {sub && <p className="text-[11.5px] text-[#4a5568] mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+// ── Payments Tab ─────────────────────────────────────────────────────────────
+function PaymentsTab({ apiKey }) {
+  const API = 'https://api.coinsflow.net';
+
+  // Balance
+  const [balance, setBalance] = useState(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+
+  // Invoice creator
+  const [invAmount, setInvAmount] = useState('');
+  const [invDesc, setInvDesc] = useState('');
+  const [invExpiry, setInvExpiry] = useState('60');
+  const [invResult, setInvResult] = useState(null);
+  const [invLoading, setInvLoading] = useState(false);
+  const [invError, setInvError] = useState('');
+
+  // Payout
+  const [payAddress, setPayAddress] = useState('');
+  const [payAmount, setPayAmount] = useState('');
+  const [payResult, setPayResult] = useState(null);
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState('');
+
+  // Clipboard
+  const [copiedAddr, setCopiedAddr] = useState(false);
+
+  function copyAddr(txt) {
+    navigator.clipboard.writeText(txt);
+    setCopiedAddr(true);
+    setTimeout(() => setCopiedAddr(false), 2000);
+  }
+
+  async function fetchBalance() {
+    if (!apiKey) return;
+    setBalanceLoading(true);
+    try {
+      const res = await fetch(`${API}/balance`, { headers: { 'X-API-Key': apiKey } });
+      const data = await res.json();
+      setBalance(data);
+    } catch {
+      setBalance({ error: 'Failed to fetch' });
+    } finally {
+      setBalanceLoading(false);
+    }
+  }
+
+  useEffect(() => { fetchBalance(); }, [apiKey]);
+
+  async function createInvoice(e) {
+    e.preventDefault();
+    setInvError('');
+    setInvResult(null);
+    setInvLoading(true);
+    try {
+      const res = await fetch(`${API}/invoices/create`, {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount_ltc: parseFloat(invAmount),
+          expires_in_minutes: parseInt(invExpiry, 10) || 60,
+          description: invDesc || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { setInvError(data.error); } else { setInvResult(data); }
+    } catch {
+      setInvError('Request failed');
+    } finally {
+      setInvLoading(false);
+    }
+  }
+
+  async function sendPayout(e) {
+    e.preventDefault();
+    setPayError('');
+    setPayResult(null);
+    setPayLoading(true);
+    try {
+      const res = await fetch(`${API}/payout`, {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_address: payAddress, amount_ltc: parseFloat(payAmount) }),
+      });
+      const data = await res.json();
+      if (data.error) { setPayError(data.error); } else { setPayResult(data); fetchBalance(); }
+    } catch {
+      setPayError('Request failed');
+    } finally {
+      setPayLoading(false);
+    }
+  }
+
+  if (!apiKey) {
+    return (
+      <div className="p-8 rounded-xl border border-dashed border-white/[0.1] bg-[#020d1c] text-center">
+        <p className="text-[14px] text-[#4a5568]">You need an API key to use Payments. Generate one in the <button className="text-blue-400 underline" onClick={() => {}}>API Keys</button> tab.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6" style={{ animation: 'cf-slide-up 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
+
+      {/* Balance card */}
+      <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c] flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-1">Available Balance</p>
+          {balanceLoading ? (
+            <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          ) : balance?.error ? (
+            <p className="text-[13px] text-red-400">{balance.error}</p>
+          ) : (
+            <>
+              <p className="text-[26px] font-extrabold text-white font-mono">{balance?.balance_ltc ?? '—'} <span className="text-[14px] text-[#334155] font-sans font-semibold">LTC</span></p>
+              {balance?.balance_usd != null && (
+                <p className="text-[12.5px] text-[#4a5568] mt-0.5">≈ ${Number(balance.balance_usd).toFixed(2)} USD</p>
+              )}
+            </>
+          )}
+        </div>
+        <button onClick={fetchBalance} disabled={balanceLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[12px] text-[#4a5568] hover:text-[#94a3b8] transition-colors">
+          <IconRefresh spinning={balanceLoading} /> Refresh
+        </button>
+      </div>
+
+      {/* Create Invoice */}
+      <div className="p-6 rounded-xl border border-white/[0.07] bg-[#020d1c]">
+        <h3 className="text-[15px] font-semibold text-white mb-1">Create Invoice</h3>
+        <p className="text-[12.5px] text-[#4a5568] mb-4">Generate a Litecoin payment address for a specific amount.</p>
+        <form onSubmit={createInvoice} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Amount (LTC) *</label>
+              <input
+                type="number" step="0.000001" min="0.000001" required
+                value={invAmount} onChange={(e) => setInvAmount(e.target.value)}
+                placeholder="0.01"
+                className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Expires (min)</label>
+              <input
+                type="number" min="1" max="10080"
+                value={invExpiry} onChange={(e) => setInvExpiry(e.target.value)}
+                placeholder="60"
+                className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Description</label>
+              <input
+                type="text" maxLength={100}
+                value={invDesc} onChange={(e) => setInvDesc(e.target.value)}
+                placeholder="Order #1234"
+                className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
+              />
+            </div>
+          </div>
+          {invError && <p className="text-[12px] text-red-400">{invError}</p>}
+          <button type="submit" disabled={invLoading} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-[13px] font-semibold transition-all active:scale-[0.97]">
+            {invLoading ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating…</> : 'Create Invoice'}
+          </button>
+        </form>
+
+        {invResult && (
+          <div className="mt-4 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-2">
+            <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Invoice Created</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-[12px] font-mono text-[#94a3b8] bg-[#040c1a] px-2 py-1.5 rounded break-all">{invResult.ltc_address}</code>
+              <button onClick={() => copyAddr(invResult.ltc_address)} className="flex-shrink-0 px-2.5 py-1.5 rounded bg-white/[0.04] border border-white/[0.08] text-[11px] text-[#4a5568] hover:text-[#94a3b8] transition-colors">
+                {copiedAddr ? '✓' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-[12px] text-[#4a5568]">Amount: <span className="text-white font-mono">{invResult.amount_ltc} LTC</span> · Status: <span className="text-emerald-400 font-semibold">{invResult.status}</span></p>
+            <a href={invResult.invoice_url} target="_blank" rel="noopener noreferrer" className="inline-block text-[12px] text-blue-400 hover:text-blue-300 underline underline-offset-2 break-all">
+              {invResult.invoice_url}
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Send Payout */}
+      <div className="p-6 rounded-xl border border-white/[0.07] bg-[#020d1c]">
+        <h3 className="text-[15px] font-semibold text-white mb-1">Send Payout</h3>
+        <p className="text-[12.5px] text-[#4a5568] mb-4">Withdraw LTC from your balance to any Litecoin address.</p>
+        <form onSubmit={sendPayout} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">To Address *</label>
+              <input
+                type="text" required
+                value={payAddress} onChange={(e) => setPayAddress(e.target.value)}
+                placeholder="LXqvJaXc9x..."
+                className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Amount (LTC) *</label>
+              <input
+                type="number" step="0.000001" min="0.000001" required
+                value={payAmount} onChange={(e) => setPayAmount(e.target.value)}
+                placeholder="0.005"
+                className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
+              />
+            </div>
+          </div>
+          {payError && <p className="text-[12px] text-red-400">{payError}</p>}
+          <button type="submit" disabled={payLoading} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-[13px] font-semibold transition-all active:scale-[0.97]">
+            {payLoading ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</> : 'Send Payout'}
+          </button>
+        </form>
+
+        {payResult && (
+          <div className="mt-4 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1">
+            <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Payout Sent</p>
+            <p className="text-[12px] text-[#4a5568]">TX Hash: <code className="text-[#94a3b8] font-mono text-[11.5px] break-all">{payResult.tx_hash}</code></p>
+            <p className="text-[12px] text-[#4a5568]">Amount: <span className="text-white font-mono">{payResult.amount_ltc} LTC</span></p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -414,9 +645,10 @@ export default function DashboardClient() {
   }
 
   const NAV_ITEMS = [
-    { id: 'overview', icon: <IconActivity />, label: 'Overview' },
-    { id: 'keys',     icon: <IconKey />,      label: 'API Keys' },
-    { id: 'docs',     icon: <IconDocs />,     label: 'Docs',    href: '/apis/docs' },
+    { id: 'overview',  icon: <IconActivity />, label: 'Overview' },
+    { id: 'keys',      icon: <IconKey />,      label: 'API Keys' },
+    { id: 'payments',  icon: <IconPayments />, label: 'Payments' },
+    { id: 'docs',      icon: <IconDocs />,     label: 'Docs',    href: '/apis/docs' },
     ...(user?.email?.toLowerCase() === 'mra88811@gmail.com'
       ? [{ id: 'admin', icon: <IconShield />, label: 'Admin', href: '/admin' }]
       : []),
@@ -536,12 +768,14 @@ export default function DashboardClient() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-[20px] font-bold text-white tracking-tight">
-                {activeTab === 'overview' ? 'Overview' : 'API Keys'}
+                {activeTab === 'overview' ? 'Overview' : activeTab === 'keys' ? 'API Keys' : 'Payments'}
               </h1>
               <p className="text-[12.5px] text-[#4a5568] mt-0.5">
                 {activeTab === 'overview'
                   ? `Welcome back, ${user?.email?.split('@')[0]}`
-                  : 'Manage your API credentials'}
+                  : activeTab === 'keys'
+                  ? 'Manage your API credentials'
+                  : 'Create invoices, check balance, and send payouts'}
               </p>
             </div>
             {/* Hamburger (mobile only) */}
@@ -788,6 +1022,11 @@ export default function DashboardClient() {
                 <UsageChart data={chartData} />
               </div>
             </div>
+          )}
+
+          {/* ── Payments tab ─────────────────────────────────── */}
+          {activeTab === 'payments' && (
+            <PaymentsTab apiKey={apiKey} />
           )}
         </main>
       </div>

@@ -15,6 +15,10 @@ const NAV = [
   { label: 'Block',           id: 'endpoint-block' },
   { label: 'Latest Blocks',   id: 'endpoint-blocks' },
   { label: 'Live Price',      id: 'endpoint-price' },
+  { label: 'Payments',        id: null },
+  { label: 'Create Invoice',  id: 'endpoint-invoice-create' },
+  { label: 'Get Balance',     id: 'endpoint-balance' },
+  { label: 'Send Payout',     id: 'endpoint-payout' },
 ];
 
 const SECTION_IDS = NAV.filter((n) => n.id !== null).map((n) => n.id);

@@ -612,9 +612,9 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
             method="POST"
             path="/invoices/create"
             title="Create Invoice"
-            desc="Generate a new Litecoin payment invoice with a unique deposit address. The invoice automatically tracks incoming payments and updates status to confirmed once received."
+            desc="Generate a new Litecoin payment invoice with a unique deposit address. Set amount_ltc for a fixed-price invoice, or omit it to create an open invoice that accepts any amount."
             params={[
-              { name: 'amount_ltc',          type: 'number',  required: true,  desc: 'Amount in LTC to request. Must be greater than 0.' },
+              { name: 'amount_ltc',          type: 'number',  required: false, desc: 'Optional fixed amount in LTC. Leave empty to create an open invoice.' },
               { name: 'expires_in_minutes',  type: 'integer', required: false, desc: 'Minutes until invoice expires. Default: 60.' },
               { name: 'description',         type: 'string',  required: false, desc: 'Optional description shown on the hosted invoice page.' },
               { name: 'tolerance_percent',   type: 'number',  required: false, desc: 'Underpayment tolerance %. Default: 2.' },
@@ -654,7 +654,7 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
             method="POST"
             path="/payout"
             title="Send Payout"
-            desc="Withdraw LTC from your balance to any Litecoin address. The amount is deducted from your balance and broadcast to the network."
+            desc="Withdraw LTC from your balance to any Litecoin address. CoinsFlow keeps a 0.5% service fee, and network fee is also deducted from the payout amount (not paid by CoinsFlow)."
             params={[
               { name: 'to_address',  type: 'string', required: true, desc: 'Destination Litecoin address (L/M/ltc1 format).' },
               { name: 'amount_ltc', type: 'number', required: true, desc: 'Amount in LTC to send. Must not exceed your balance.' },
@@ -663,8 +663,13 @@ curl https://api.coinsflow.net/v1/address/ltc/LXqvJaXc9xC8... \
             responseExample={`{
   "payout_id": "a7f3c9e2-1b4d-4c8a-9d2f-3e7b1a5f8c4d",
   "tx_hash": "4a2d9f1e3c8b7a6d...",
+  "requested_amount_ltc": 0.005,
+  "sent_amount_ltc": 0.004947,
+  "service_fee_ltc": 0.000025,
+  "fee_ltc": 0.000028,
+  "total_fees_ltc": 0.000053,
   "to_address": "LXqvJaXc9xC8UjFEDRTDjzD8bNHzMpBMQJ",
-  "amount_ltc": 0.005,
+  "new_balance_ltc": 0.047365,
   "status": "sent"
 }`}
           />

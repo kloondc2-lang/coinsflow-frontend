@@ -279,14 +279,19 @@ function PaymentsTab({ apiKey }) {
     setInvResult(null);
     setInvLoading(true);
     try {
+      const payload = {
+        expires_in_minutes: parseInt(invExpiry, 10) || 60,
+        description: invDesc || undefined,
+      };
+
+      if (invAmount.trim() !== '') {
+        payload.amount_ltc = parseFloat(invAmount);
+      }
+
       const res = await fetch(`${API}/invoices/create`, {
         method: 'POST',
         headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount_ltc: parseFloat(invAmount),
-          expires_in_minutes: parseInt(invExpiry, 10) || 60,
-          description: invDesc || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.error) { setInvError(data.error); } else { setInvResult(data); }
@@ -353,15 +358,15 @@ function PaymentsTab({ apiKey }) {
       {/* Create Invoice */}
       <div className="p-6 rounded-xl border border-white/[0.07] bg-[#020d1c]">
         <h3 className="text-[15px] font-semibold text-white mb-1">Create Invoice</h3>
-        <p className="text-[12.5px] text-[#4a5568] mb-4">Generate a Litecoin payment address for a specific amount.</p>
+        <p className="text-[12.5px] text-[#4a5568] mb-4">Generate a Litecoin payment address. Leave amount empty to create an open invoice that accepts any payment amount.</p>
         <form onSubmit={createInvoice} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Amount (LTC) *</label>
+              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Amount (LTC) Optional</label>
               <input
-                type="number" step="0.000001" min="0.000001" required
+                type="number" step="0.000001" min="0.000001"
                 value={invAmount} onChange={(e) => setInvAmount(e.target.value)}
-                placeholder="0.01"
+                placeholder="Leave empty for open invoice"
                 className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
               />
             </div>
@@ -399,7 +404,9 @@ function PaymentsTab({ apiKey }) {
                 {copiedAddr ? '✓' : 'Copy'}
               </button>
             </div>
-            <p className="text-[12px] text-[#4a5568]">Amount: <span className="text-white font-mono">{invResult.amount_ltc} LTC</span> · Status: <span className="text-emerald-400 font-semibold">{invResult.status}</span></p>
+            <p className="text-[12px] text-[#4a5568]">
+              Amount: <span className="text-white font-mono">{invResult.amount_ltc ? `${invResult.amount_ltc} LTC` : 'Open invoice (any amount)'}</span> · Status: <span className="text-emerald-400 font-semibold">{invResult.status}</span>
+            </p>
             <a href={invResult.invoice_url} target="_blank" rel="noopener noreferrer" className="inline-block text-[12px] text-blue-400 hover:text-blue-300 underline underline-offset-2 break-all">
               {invResult.invoice_url}
             </a>
@@ -410,7 +417,7 @@ function PaymentsTab({ apiKey }) {
       {/* Send Payout */}
       <div className="p-6 rounded-xl border border-white/[0.07] bg-[#020d1c]">
         <h3 className="text-[15px] font-semibold text-white mb-1">Send Payout</h3>
-        <p className="text-[12.5px] text-[#4a5568] mb-4">Withdraw LTC from your balance to any Litecoin address.</p>
+        <p className="text-[12.5px] text-[#4a5568] mb-4">Withdraw LTC from your balance to any Litecoin address. CoinsFlow keeps 0.5% service fee and network fee is deducted from the payout amount.</p>
         <form onSubmit={sendPayout} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -442,7 +449,9 @@ function PaymentsTab({ apiKey }) {
           <div className="mt-4 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1">
             <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Payout Sent</p>
             <p className="text-[12px] text-[#4a5568]">TX Hash: <code className="text-[#94a3b8] font-mono text-[11.5px] break-all">{payResult.tx_hash}</code></p>
-            <p className="text-[12px] text-[#4a5568]">Amount: <span className="text-white font-mono">{payResult.amount_ltc} LTC</span></p>
+            <p className="text-[12px] text-[#4a5568]">Requested: <span className="text-white font-mono">{payResult.requested_amount_ltc} LTC</span></p>
+            <p className="text-[12px] text-[#4a5568]">Sent after fees: <span className="text-white font-mono">{payResult.sent_amount_ltc} LTC</span></p>
+            <p className="text-[12px] text-[#4a5568]">Fees kept: <span className="text-white font-mono">{payResult.total_fees_ltc} LTC</span> <span className="text-[#64748b]">(service {payResult.service_fee_ltc} + network {payResult.fee_ltc})</span></p>
           </div>
         )}
       </div>

@@ -27,6 +27,13 @@ function IconDocs() {
     </svg>
   );
 }
+function IconShield() {
+  return (
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
 function IconSignOut() {
   return (
     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -410,6 +417,9 @@ export default function DashboardClient() {
     { id: 'overview', icon: <IconActivity />, label: 'Overview' },
     { id: 'keys',     icon: <IconKey />,      label: 'API Keys' },
     { id: 'docs',     icon: <IconDocs />,     label: 'Docs',    href: '/apis/docs' },
+    ...(user?.email?.toLowerCase() === 'mra88811@gmail.com'
+      ? [{ id: 'admin', icon: <IconShield />, label: 'Admin', href: '/admin' }]
+      : []),
   ];
 
   const PERIODS = [

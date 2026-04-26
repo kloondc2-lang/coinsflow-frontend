@@ -6,7 +6,7 @@ export const metadata = {
   title: 'CoinsFlow API Docs — Reference',
   description: 'Complete reference for the CoinsFlow Blockchain API. Endpoints, authentication, multi-language examples, and error codes.',
   other: {
-    'ai-description': 'CoinsFlow REST API for Litecoin blockchain data. Base URL: https://api.coinsflow.net. Auth via X-API-Key header. JSON responses. Endpoints: address lookup, transactions, blocks, live price.',
+    'ai-description': 'CoinsFlow REST API for Litecoin blockchain data and payment gateway workflows. Base URL: https://api.coinsflow.net. Auth via X-API-Key header. JSON responses. Endpoints: address lookup, transactions, blocks, live price, invoice creation, balance, payout.',
   },
 };
 
@@ -330,7 +330,7 @@ export default function DocsPage() {
             REST API for querying Litecoin blockchain data. Returns JSON. No SDK required.
           </p>
           <div className="flex flex-wrap gap-2 mt-4 mb-12">
-            {['REST', 'JSON', 'API Key Auth', 'Litecoin', 'Free'].map((t) => (
+            {['REST', 'JSON', 'API Key Auth', 'Litecoin', 'Payments', 'Free'].map((t) => (
               <span key={t} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/[0.04] border border-white/[0.08] text-[#4a5568]">{t}</span>
             ))}
           </div>
@@ -345,7 +345,7 @@ export default function DocsPage() {
               <p><strong className="text-[#94a3b8]">Base URL:</strong> <code className="text-blue-400 font-mono bg-white/[0.04] px-1 rounded">https://api.coinsflow.net</code></p>
               <p><strong className="text-[#94a3b8]">Auth:</strong> Header <code className="text-blue-400 font-mono bg-white/[0.04] px-1 rounded">X-API-Key: cf_live_...</code> — get a key at <code className="text-blue-400 font-mono bg-white/[0.04] px-1 rounded">https://coinsflow.net/apis/dashboard</code></p>
               <p><strong className="text-[#94a3b8]">Rate limits:</strong> Unlimited (beta). Returns <code className="text-blue-400 font-mono bg-white/[0.04] px-1 rounded">429</code> if exceeded.</p>
-              <p><strong className="text-[#94a3b8]">Endpoints:</strong> GET /v1/address/ltc/{'{address}'} · GET /v1/tx/ltc/{'{txid}'} · GET /v1/block/ltc/{'{hash}'} · GET /v1/blocks/ltc · GET /v1/price/ltc</p>
+              <p><strong className="text-[#94a3b8]">Endpoints:</strong> GET /v1/address/ltc/{'{address}'} · GET /v1/tx/ltc/{'{txid}'} · GET /v1/block/ltc/{'{hash}'} · GET /v1/blocks/ltc · GET /v1/price/ltc · POST /invoices/create · GET /balance · POST /payout</p>
               <p><strong className="text-[#94a3b8]">Machine-readable spec:</strong> <a href="/openapi.json" className="text-blue-400 hover:underline">/openapi.json</a> (OpenAPI 3.1) · <a href="/llms.txt" className="text-blue-400 hover:underline">/llms.txt</a></p>
             </div>
           </details>

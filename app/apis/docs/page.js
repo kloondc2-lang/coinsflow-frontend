@@ -237,7 +237,7 @@ res = requests.get(url, headers=headers)
 data = res.json()
 
 print(f"Balance: {data['balance_ltc']} LTC")
-print(f"USD value: ${data['balance_usd']:.2f}")`,
+print(f"USD value: \${data['balance_usd']:.2f}")`,
     node: `const res = await fetch("https://api.coinsflow.net/balance", {
   headers: { "X-API-Key": "cf_live_your_key_here" },
 });

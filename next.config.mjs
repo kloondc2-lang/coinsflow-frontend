@@ -10,6 +10,12 @@ const nextConfig = {
     browsersListForSwc: true,
     legacyBrowsers: false,
   },
+  async rewrites() {
+    return [
+      // Expose OpenAPI spec at /openapi.json for AI agents and tooling
+      { source: '/openapi.json', destination: '/api/openapi' },
+    ];
+  },
 };
 
 export default nextConfig;

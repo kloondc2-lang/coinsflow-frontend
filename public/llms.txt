@@ -1,0 +1,77 @@
+# CoinsFlow Blockchain API
+
+CoinsFlow is a Litecoin blockchain data API. It provides JSON endpoints for querying
+addresses, transactions, blocks, and live LTC price. Free tier with unlimited requests during beta.
+
+## Base URL
+
+https://api.coinsflow.net
+
+## Authentication
+
+Include your API key in the X-API-Key header:
+
+    X-API-Key: cf_live_your_key_here
+
+Get a free API key at: https://coinsflow.net/apis/dashboard
+
+## Endpoints
+
+### GET /v1/address/ltc/{address}
+Look up a Litecoin address. Returns balance, total received, total sent, tx count, and recent transactions.
+
+Example:
+    curl https://api.coinsflow.net/v1/address/ltc/LMURqs4tNveEY75pzFQpPiBR67fgqUPmgT \
+      -H "X-API-Key: cf_live_your_key_here"
+
+### GET /v1/tx/ltc/{txid}
+Get full transaction detail including inputs, outputs, fee, confirmations, block height.
+
+Example:
+    curl https://api.coinsflow.net/v1/tx/ltc/07de5fb0c9ac8a3380e2fa62cae70e89680c0b87aa4b92acfb1497ddbb6e02f4 \
+      -H "X-API-Key: cf_live_your_key_here"
+
+### GET /v1/block/ltc/{hash}
+Get a block by hash. Returns height, timestamp, tx count, miner, size, and the list of transaction IDs.
+
+Example:
+    curl https://api.coinsflow.net/v1/block/ltc/f2cb635024c61f14257716e8ae12a376e5d811c22d81066e3003c84ea4d66af2 \
+      -H "X-API-Key: cf_live_your_key_here"
+
+### GET /v1/blocks/ltc
+Get the 10 latest Litecoin blocks. Returns height, hash, time, tx count, and size for each block.
+
+Example:
+    curl https://api.coinsflow.net/v1/blocks/ltc \
+      -H "X-API-Key: cf_live_your_key_here"
+
+### GET /v1/price/ltc
+Get the current LTC/USD price.
+
+Example:
+    curl https://api.coinsflow.net/v1/price/ltc \
+      -H "X-API-Key: cf_live_your_key_here"
+
+Response: { "price_usd": 56.02 }
+
+## Rate Limits
+
+Unlimited during beta. Returns 429 Too Many Requests if exceeded.
+
+## Error Format
+
+All errors return JSON:
+    { "error": "Error message here" }
+
+Common HTTP status codes:
+- 200 OK
+- 400 Bad Request
+- 401 Unauthorized (missing/invalid key)
+- 404 Not Found
+- 429 Too Many Requests
+- 500 Internal Server Error
+
+## Machine-readable spec
+
+OpenAPI 3.1: https://coinsflow.net/openapi.json
+Full docs: https://coinsflow.net/apis/docs

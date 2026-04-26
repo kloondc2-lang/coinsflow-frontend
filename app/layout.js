@@ -65,6 +65,28 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
+        {/* WebApplication schema — for AI/LLM discoverability */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'CoinsFlow Blockchain API',
+              url: 'https://coinsflow.net/apis',
+              applicationCategory: 'FinanceApplication',
+              operatingSystem: 'Any',
+              description: 'REST API for Litecoin blockchain data. Query addresses, transactions, blocks, and live LTC price. JSON responses. API key auth via X-API-Key header.',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                description: 'Free tier with unlimited requests during beta',
+              },
+            }),
+          }}
+        />
+        <link rel="alternate" type="application/json" href="/openapi.json" title="OpenAPI 3.1 Spec" />
       </head>
       <body
         className={`${inter.className} bg-white dark:bg-[#020d1c] text-gray-900 dark:text-gray-100 antialiased min-h-screen flex flex-col transition-colors duration-300`}

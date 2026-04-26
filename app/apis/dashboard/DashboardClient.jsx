@@ -229,6 +229,7 @@ export default function DashboardClient() {
   const [regenerating, setRegenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [period, setPeriod] = useState('7d');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const loadData = useCallback(async (uid) => {
     if (!supabase) return;
@@ -420,6 +421,60 @@ export default function DashboardClient() {
 
   return (
     <div className="min-h-[100dvh] bg-[#020d1c] text-[#e2e8f0]">
+
+      {/* ── Mobile nav drawer ───────────────────────────────────────── */}
+      {mobileNavOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="relative z-10 w-64 max-w-[80vw] min-h-full bg-[#0a1628] border-r border-white/[0.08] flex flex-col py-8 px-4">
+            <div className="mb-8 px-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-semibold text-[#334155] uppercase tracking-widest">Workspace</span>
+              </div>
+              <p className="text-[12.5px] font-medium text-[#4a5568] truncate">{user?.email}</p>
+            </div>
+            <nav className="flex flex-col gap-0.5 flex-1">
+              {NAV_ITEMS.map((item) =>
+                item.href ? (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-3 rounded-lg text-[14px] text-[#4a5568] hover:text-[#94a3b8] hover:bg-white/[0.04] transition-colors"
+                  >
+                    {item.icon} {item.label}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id); setMobileNavOpen(false); }}
+                    className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-[14px] transition-all text-left w-full ${
+                      activeTab === item.id
+                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                        : 'text-[#4a5568] hover:text-[#94a3b8] hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    {item.icon} {item.label}
+                  </button>
+                )
+              )}
+            </nav>
+            <button
+              onClick={() => { setMobileNavOpen(false); signOut(); }}
+              className="flex items-center gap-2.5 px-3 py-3 rounded-lg text-[14px] text-[#334155] hover:text-red-400 hover:bg-red-500/5 transition-colors"
+            >
+              <IconSignOut /> Sign out
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[1280px] mx-auto flex min-h-[calc(100dvh-68px)]">
 
         {/* ── Sidebar ──────────────────────────────────────────────────── */}
@@ -479,8 +534,17 @@ export default function DashboardClient() {
                   : 'Manage your API credentials'}
               </p>
             </div>
-            <button onClick={signOut} className="md:hidden flex items-center gap-1.5 text-[12px] text-[#334155] hover:text-red-400 transition-colors">
-              <IconSignOut /> Sign out
+            {/* Hamburger (mobile only) */}
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden flex items-center justify-center w-11 h-11 -mr-2 rounded-lg text-[#4a5568] hover:text-[#94a3b8] hover:bg-white/[0.04] transition-colors"
+              aria-label="Open navigation"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
             </button>
           </div>
 

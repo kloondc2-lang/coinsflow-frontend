@@ -53,7 +53,7 @@ function IconRefresh({ spinning }) {
 const STATUS_CONFIG = {
   pending:    { label: 'Awaiting Payment', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)', pulse: true },
   partial:    { label: 'Partial Payment',  color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  pulse: true },
-  confirming: { label: 'Confirming',       color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  pulse: true },
+  confirming: { label: 'Payment Detected', color: '#fb923c', bg: 'rgba(251,146,60,0.12)',  pulse: true },
   confirmed:  { label: 'Confirmed',        color: '#4ade80', bg: 'rgba(74,222,128,0.12)',  pulse: false },
   expired:    { label: 'Expired',          color: '#71717a', bg: 'rgba(113,113,122,0.12)', pulse: false },
 };
@@ -160,7 +160,8 @@ function PaymentProgress({ received, expected }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function InvoiceClient({ invoiceId }) {
   const [invoice, setInvoice] = useState(null);
-  const [qr, setQr] = useState(null);
+  const [qrData, setQrData] = useState(null);
+  const [qrMode, setQrMode] = useState('amount');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -175,6 +176,19 @@ export default function InvoiceClient({ invoiceId }) {
     return () => clearInterval(t);
   }, []);
 
+  const fetchQr = useCallback(async () => {
+    if (!invoiceId || !invoice?.ltc_address || invoice.ltc_address === '__PENDING__') return;
+    try {
+      const res = await fetch(`${API}/invoices/qr/${invoiceId}?mode=${qrMode}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!mountedRef.current) return;
+      setQrData(data);
+    } catch {
+      // Ignore QR refresh failures and keep the last good QR rendered.
+    }
+  }, [invoice?.ltc_address, invoiceId, qrMode]);
+
   const fetchInvoice = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setPolling(true);
@@ -186,12 +200,10 @@ export default function InvoiceClient({ invoiceId }) {
       setInvoice(data);
       setError(null);
 
-      // Fetch QR once we have the address
-      if (data.ltc_address && data.ltc_address !== '__PENDING__' && !qr) {
-        fetch(`${API}/invoices/qr/${invoiceId}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => { if (mountedRef.current && d) setQr(d.qr_base64); })
-          .catch(() => {});
+      if (data.amount_ltc) {
+        setQrMode((current) => current || 'amount');
+      } else {
+        setQrMode('address');
       }
     } catch (err) {
       if (!mountedRef.current) return;
@@ -201,7 +213,7 @@ export default function InvoiceClient({ invoiceId }) {
       setLoading(false);
       setPolling(false);
     }
-  }, [invoiceId, qr]);
+  }, [invoiceId]);
 
   // Initial load
   useEffect(() => {
@@ -209,6 +221,10 @@ export default function InvoiceClient({ invoiceId }) {
     fetchInvoice(false);
     return () => { mountedRef.current = false; };
   }, [fetchInvoice]);
+
+  useEffect(() => {
+    fetchQr();
+  }, [fetchQr]);
 
   // Live polling every 15s — only while non-terminal status
   useEffect(() => {
@@ -218,7 +234,7 @@ export default function InvoiceClient({ invoiceId }) {
       return;
     }
     if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(() => fetchInvoice(true), 15_000);
+    pollRef.current = setInterval(() => fetchInvoice(true), 5_000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [invoice?.status, fetchInvoice]);
 
@@ -234,6 +250,8 @@ export default function InvoiceClient({ invoiceId }) {
   const msLeft = invoice ? new Date(invoice.expires_at).getTime() - now : 0;
   const isTerminal = invoice && ['confirmed', 'expired'].includes(invoice.status);
   const isConfirmed = invoice?.status === 'confirmed';
+  const hasDetectedPayment = (invoice?.ltc_received ?? 0) > 0 && !isConfirmed;
+  const qrSupportsAmount = Boolean(invoice?.amount_ltc);
 
   return (
     <>
@@ -314,6 +332,27 @@ export default function InvoiceClient({ invoiceId }) {
         .qr-panel {
           animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both;
         }
+        .qr-mode-btn {
+          flex: 1;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: #040c1a;
+          color: #94a3b8;
+          border-radius: 999px;
+          padding: 0.45rem 0.75rem;
+          font-size: 0.74rem;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .qr-mode-btn:hover { color: #e2e8f0; border-color: rgba(255,255,255,0.14); }
+        .qr-mode-btn:active { transform: scale(0.98); }
+        .qr-mode-btn.active {
+          background: #f8fafc;
+          color: #0f172a;
+          border-color: rgba(255,255,255,0.9);
+          box-shadow: 0 6px 20px rgba(255,255,255,0.08);
+        }
         .confirmed-banner {
           animation: confirmPop 0.5s cubic-bezier(0.16,1,0.3,1) both;
         }
@@ -391,6 +430,20 @@ export default function InvoiceClient({ invoiceId }) {
                       {formatLTC(invoice.ltc_received)} LTC received
                       {invoice.usd_value_received ? ` · ≈ $${parseFloat(invoice.usd_value_received).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD` : ''}
                       {invoice.tx_hash ? ` · tx ${invoice.tx_hash.slice(0, 12)}…` : ''}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {hasDetectedPayment && (
+                <div className="confirmed-banner invoice-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem', borderColor: 'rgba(251,146,60,0.22)', background: 'rgba(251,146,60,0.08)' }}>
+                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(251,146,60,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fb923c' }}>
+                    <IconRefresh spinning />
+                  </span>
+                  <div>
+                    <p style={{ fontWeight: 600, color: '#fdba74', fontSize: '0.95rem', marginBottom: '0.15rem' }}>Payment detected</p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                      {formatLTC(invoice.ltc_received)} LTC has reached the address and this page will keep updating until it confirms on-chain.
                     </p>
                   </div>
                 </div>
@@ -536,7 +589,7 @@ export default function InvoiceClient({ invoiceId }) {
                   {!isTerminal && (
                     <p style={{ fontSize: '0.78rem', color: '#334155', lineHeight: 1.6, padding: '0 0.25rem', animation: 'fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both' }}>
                       Send exactly {invoice.amount_ltc ? `${formatLTC(invoice.amount_ltc)} LTC` : 'any amount of LTC'} to the address above.
-                      This page updates automatically. Do not close it until payment is confirmed.
+                      This page detects incoming payment as soon as it reaches the network and keeps updating until it is confirmed.
                     </p>
                   )}
                 </div>
@@ -546,24 +599,45 @@ export default function InvoiceClient({ invoiceId }) {
 
                   {/* QR code card */}
                   <div className="invoice-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    {qr ? (
+                    {qrData?.qr_base64 ? (
                       <>
-                        <div style={{ display: 'inline-block', padding: '0.75rem', borderRadius: '0.75rem', background: '#0a1628', border: '1px solid rgba(255,255,255,0.07)', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                          <button
+                            type="button"
+                            className={`qr-mode-btn${qrMode === 'amount' ? ' active' : ''}`}
+                            onClick={() => setQrMode('amount')}
+                            disabled={!qrSupportsAmount}
+                            style={!qrSupportsAmount ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+                          >
+                            QR with amount
+                          </button>
+                          <button
+                            type="button"
+                            className={`qr-mode-btn${qrMode === 'address' ? ' active' : ''}`}
+                            onClick={() => setQrMode('address')}
+                          >
+                            Address only
+                          </button>
+                        </div>
+                        <div style={{ display: 'inline-block', padding: '1rem', borderRadius: '1rem', background: '#ffffff', border: '1px solid rgba(255,255,255,0.85)', boxShadow: '0 20px 50px rgba(0,0,0,0.28)', marginBottom: '1rem' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={qr}
+                            src={qrData.qr_base64}
                             alt="Payment QR code"
-                            width={180}
-                            height={180}
-                            style={{ display: 'block', borderRadius: '0.375rem' }}
+                            width={208}
+                            height={208}
+                            style={{ display: 'block', borderRadius: '0.5rem', background: '#ffffff' }}
                           />
                         </div>
                         <p style={{ fontSize: '0.75rem', color: '#475569', lineHeight: 1.5 }}>
-                          Scan with any Litecoin wallet
+                          {qrMode === 'amount' && qrSupportsAmount ? 'Scan to open a payment request with the amount prefilled.' : 'Scan to copy the wallet address into any Litecoin wallet.'}
+                        </p>
+                        <p style={{ marginTop: '0.45rem', fontSize: '0.7rem', color: '#334155', lineHeight: 1.5, wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                          {qrData.uri}
                         </p>
                       </>
                     ) : (
-                      <div style={{ width: 180, height: 180, margin: '0 auto 1rem', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                      <div style={{ width: 208, height: 208, margin: '0 auto 1rem', borderRadius: '1rem', overflow: 'hidden' }}>
                         <Skeleton w="100%" h="100%" radius="0.75rem" />
                       </div>
                     )}
@@ -584,7 +658,7 @@ export default function InvoiceClient({ invoiceId }) {
                       <p style={{ fontSize: '0.72rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>Status</p>
                       {!isTerminal && (
                         <span style={{ fontSize: '0.68rem', color: '#334155' }}>
-                          Refreshes every 15s
+                          Refreshes every 5s
                         </span>
                       )}
                     </div>
@@ -595,6 +669,14 @@ export default function InvoiceClient({ invoiceId }) {
                         <p style={{ fontSize: '0.72rem', color: '#475569', marginBottom: '0.2rem' }}>Received</p>
                         <p style={{ fontWeight: 600, fontSize: '0.95rem', fontVariantNumeric: 'tabular-nums' }}>
                           {formatLTC(invoice.ltc_received)} LTC
+                        </p>
+                        {invoice.usd_value_received ? (
+                          <p style={{ marginTop: '0.2rem', fontSize: '0.74rem', color: '#64748b' }}>
+                            ≈ ${parseFloat(invoice.usd_value_received).toFixed(2)} USD
+                          </p>
+                        ) : null}
+                        <p style={{ marginTop: '0.3rem', fontSize: '0.72rem', color: '#94a3b8' }}>
+                          {invoice.confirmations > 0 ? `${invoice.confirmations} confirmation${invoice.confirmations === 1 ? '' : 's'}` : 'Seen on network, waiting for first confirmation'}
                         </p>
                       </div>
                     )}

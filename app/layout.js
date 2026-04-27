@@ -1,11 +1,9 @@
 import { Inter } from 'next/font/google';
-import Script from 'next/script';
 import './globals.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ThemeProvider from './components/ThemeProvider';
 import ChatWidget from './components/ChatWidget';
-import TurnstileGate from './components/TurnstileGate';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -92,17 +90,11 @@ export default function RootLayout({ children }) {
         className={`${inter.className} bg-white dark:bg-[#020d1c] text-gray-900 dark:text-gray-100 antialiased min-h-screen flex flex-col transition-colors duration-300`}
       >
         <ThemeProvider>
-          <TurnstileGate>
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
             <ChatWidget />
-          </TurnstileGate>
         </ThemeProvider>
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );

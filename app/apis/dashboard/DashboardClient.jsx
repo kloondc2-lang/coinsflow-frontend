@@ -343,7 +343,7 @@ function PaymentsTab({ apiKey }) {
             <p className="text-[13px] text-red-400">{balance.error}</p>
           ) : (
             <>
-              <p className="text-[26px] font-extrabold text-white font-mono">{balance?.balance_ltc ?? '—'} <span className="text-[14px] text-[#334155] font-sans font-semibold">LTC</span></p>
+              <p className="text-[26px] font-extrabold text-white font-mono">{balance?.balance_ltc != null ? Number(balance.balance_ltc).toFixed(8) : '—'} <span className="text-[14px] text-[#334155] font-sans font-semibold">LTC</span></p>
               {balance?.balance_usd != null && (
                 <p className="text-[12.5px] text-[#4a5568] mt-0.5">≈ ${Number(balance.balance_usd).toFixed(2)} USD</p>
               )}
@@ -430,10 +430,20 @@ function PaymentsTab({ apiKey }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider mb-1">Amount (LTC) *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-semibold text-[#334155] uppercase tracking-wider">Amount (LTC) *</label>
+                <button
+                  type="button"
+                  onClick={() => setPayAmount(balance?.balance_ltc != null ? parseFloat(Number(balance.balance_ltc).toFixed(6)).toString() : '')}
+                  className="text-[10px] font-semibold text-blue-400 hover:text-blue-300 transition-colors px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20"
+                >
+                  All
+                </button>
+              </div>
               <input
                 type="number" step="0.000001" min="0.000001" required
                 value={payAmount} onChange={(e) => setPayAmount(e.target.value)}
+                onBlur={(e) => { const v = e.target.value; if (v) setPayAmount(parseFloat(parseFloat(v).toFixed(6)).toString()); }}
                 placeholder="0.005"
                 className="w-full px-3 py-2 rounded-lg bg-[#040c1a] border border-white/[0.08] text-[13px] text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-blue-500/50 transition-colors"
               />
@@ -448,7 +458,7 @@ function PaymentsTab({ apiKey }) {
         {payResult && (
           <div className="mt-4 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1">
             <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Payout Sent</p>
-            <p className="text-[12px] text-[#4a5568]">TX Hash: <code className="text-[#94a3b8] font-mono text-[11.5px] break-all">{payResult.tx_hash}</code></p>
+            <p className="text-[12px] text-[#4a5568]">TX Hash: <a href={`/explorer/litecoin/tx/${payResult.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono text-[11.5px] break-all underline underline-offset-2 transition-colors">{payResult.tx_hash}</a></p>
             <p className="text-[12px] text-[#4a5568]">Requested: <span className="text-white font-mono">{payResult.requested_amount_ltc} LTC</span></p>
             <p className="text-[12px] text-[#4a5568]">Sent after fees: <span className="text-white font-mono">{payResult.sent_amount_ltc} LTC</span></p>
             <p className="text-[12px] text-[#4a5568]">Fees kept: <span className="text-white font-mono">{payResult.total_fees_ltc} LTC</span> <span className="text-[#64748b]">(service {payResult.service_fee_ltc} + network {payResult.fee_ltc})</span></p>

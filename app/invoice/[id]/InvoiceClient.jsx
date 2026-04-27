@@ -429,7 +429,7 @@ export default function InvoiceClient({ invoiceId }) {
                     <p style={{ color: '#6b7280', fontSize: '0.8rem' }}>
                       {formatLTC(invoice.ltc_received)} LTC received
                       {invoice.usd_value_received ? ` · ≈ $${parseFloat(invoice.usd_value_received).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD` : ''}
-                      {invoice.tx_hash ? ` · tx ${invoice.tx_hash.slice(0, 12)}…` : ''}
+  
                     </p>
                   </div>
                 </div>
@@ -573,13 +573,13 @@ export default function InvoiceClient({ invoiceId }) {
                     )}
 
                     {invoice.tx_hash && (
-                      <div className="meta-row" style={{ '--delay': '200ms' }}>
-                        <span className="meta-label">Tx hash</span>
+                      <div className="meta-row" style={{ '--delay': '200ms', alignItems: 'flex-start' }}>
+                        <span className="meta-label" style={{ flexShrink: 0, marginTop: '0.1rem' }}>Tx hash</span>
                         <Link
                           href={`/explorer/litecoin/tx/${invoice.tx_hash}`}
-                          style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#60a5fa', textDecoration: 'none', ':hover': { textDecoration: 'underline' } }}
+                          style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#60a5fa', textDecoration: 'none', wordBreak: 'break-all', textAlign: 'right', marginLeft: '0.75rem' }}
                         >
-                          {truncateAddress(invoice.tx_hash)}
+                          {invoice.tx_hash}
                         </Link>
                       </div>
                     )}
@@ -597,8 +597,8 @@ export default function InvoiceClient({ invoiceId }) {
                 {/* Right column — QR + live status */}
                 <div className="qr-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'sticky', top: '1.5rem' }}>
 
-                  {/* QR code card */}
-                  <div className="invoice-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                  {/* QR code card — hidden once payment is detected or confirmed */}
+                  {!isConfirmed && invoice.status !== 'confirming' && <div className="invoice-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
                     {qrData?.qr_base64 ? (
                       <>
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -650,7 +650,7 @@ export default function InvoiceClient({ invoiceId }) {
                         </p>
                       </div>
                     )}
-                  </div>
+                  </div>}
 
                   {/* Live status card */}
                   <div className="invoice-card" style={{ padding: '1.25rem' }}>

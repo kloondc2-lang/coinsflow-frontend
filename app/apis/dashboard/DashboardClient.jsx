@@ -253,6 +253,12 @@ function PaymentsTab({ apiKey }) {
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState('');
 
+  const [payouts, setPayouts] = useState(null);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const [paySearch, setPaySearch] = useState('');
+  const [payPage, setPayPage] = useState(1);
+  const PAY_PAGE_SIZE = 10;
+
   function formatDisplayBalance(v) {
     if (v == null) return '—';
     const n = parseFloat(v);
@@ -289,7 +295,21 @@ function PaymentsTab({ apiKey }) {
     }
   }
 
-  useEffect(() => { fetchBalance(); fetchInvoices(); }, [apiKey]);
+  async function fetchPayouts() {
+    if (!apiKey) return;
+    setPayoutsLoading(true);
+    try {
+      const res = await fetch(`${API}/payout`, { headers: { 'X-API-Key': apiKey } });
+      const data = await res.json();
+      setPayouts(data.payouts || []);
+    } catch {
+      setPayouts([]);
+    } finally {
+      setPayoutsLoading(false);
+    }
+  }
+
+  useEffect(() => { fetchBalance(); fetchInvoices(); fetchPayouts(); }, [apiKey]);
 
   async function createInvoice(e) {
     e.preventDefault();
@@ -318,7 +338,7 @@ function PaymentsTab({ apiKey }) {
         body: JSON.stringify({ to_address: payAddress, amount_ltc: parseFloat(payAmount) }),
       });
       const data = await res.json();
-      if (data.error) { setPayError(data.error); } else { setPayResult(data); fetchBalance(); }
+      if (data.error) { setPayError(data.error); } else { setPayResult(data); fetchBalance(); fetchPayouts(); }
     } catch { setPayError('Request failed'); }
     finally { setPayLoading(false); }
   }
@@ -634,6 +654,162 @@ function PaymentsTab({ apiKey }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Payout History ── */}
+      <div className="rounded-xl border border-white/[0.07] bg-[#0a1628] overflow-hidden">
+        <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] flex items-center justify-between">
+          <div>
+            <h3 className="text-[14px] font-semibold text-white tracking-tight">Payout History</h3>
+            <p className="text-[12px] text-[#4a5568] mt-0.5">All payouts sent with this API key</p>
+          </div>
+          <button onClick={fetchPayouts} disabled={payoutsLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11.5px] text-[#4a5568] hover:text-[#94a3b8] hover:border-white/[0.1] transition-all">
+            <IconRefresh spinning={payoutsLoading} /> Refresh
+          </button>
+        </div>
+
+        {payouts && payouts.length > 0 && (
+          <div className="px-5 pt-3 pb-2.5 border-b border-white/[0.04]">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#334155] pointer-events-none" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                value={paySearch}
+                onChange={(e) => { setPaySearch(e.target.value); setPayPage(1); }}
+                placeholder="Search by address, tx hash, status…"
+                className="w-full pl-8 pr-8 py-2 rounded-lg bg-[#040c1a] border border-white/[0.07] text-[12.5px] text-[#e2e8f0] placeholder-[#2d3748] focus:outline-none focus:border-blue-500/30 transition-colors font-mono"
+              />
+              {paySearch && (
+                <button onClick={() => { setPaySearch(''); setPayPage(1); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#334155] hover:text-[#94a3b8] transition-colors">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {payoutsLoading && !payouts && (
+          <div className="px-6 py-10 flex justify-center">
+            <div className="w-5 h-5 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!payoutsLoading && payouts?.length === 0 && (
+          <div className="px-6 py-12 text-center">
+            <div className="w-8 h-8 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-[#334155]"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </div>
+            <p className="text-[13px] text-[#334155] font-mono">no payouts yet</p>
+            <p className="text-[11.5px] text-[#1e3a5f] mt-1">Send your first payout above</p>
+          </div>
+        )}
+
+        {payouts && payouts.length > 0 && (() => {
+          const q = paySearch.trim().toLowerCase();
+          const filtered = q ? payouts.filter(p =>
+            (p.to_address || '').toLowerCase().includes(q) ||
+            (p.tx_hash || '').toLowerCase().includes(q) ||
+            (p.status || '').toLowerCase().includes(q)
+          ) : payouts;
+          const totalPages = Math.max(1, Math.ceil(filtered.length / PAY_PAGE_SIZE));
+          const page = Math.min(payPage, totalPages);
+          const pageItems = filtered.slice((page - 1) * PAY_PAGE_SIZE, page * PAY_PAGE_SIZE);
+          return (
+            <>
+              <div className="divide-y divide-white/[0.04]">
+                {filtered.length === 0 && (
+                  <div className="px-6 py-10 text-center">
+                    <p className="text-[12.5px] text-[#334155] font-mono">no results for &ldquo;{paySearch}&rdquo;</p>
+                  </div>
+                )}
+                {pageItems.map((p, idx) => {
+                  const isOpen = expandedInv === ('pay_' + p.id);
+                  const sentDate = new Date(p.created_at);
+                  return (
+                    <div key={p.id} style={{ animationDelay: `${idx * 25}ms` }}>
+                      <button
+                        onClick={() => setExpandedInv(isOpen ? null : ('pay_' + p.id))}
+                        className="w-full px-5 py-3.5 flex items-center gap-3 hover:bg-white/[0.015] transition-colors text-left"
+                      >
+                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 5px #4ade8050' }} />
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-[12px] font-mono text-[#64748b] truncate">{p.to_address}</span>
+                          {p.tx_hash && <span className="block text-[11px] text-[#334155] font-mono truncate">{p.tx_hash.slice(0, 16)}…</span>}
+                        </span>
+                        <span className="flex-shrink-0 text-right mr-1">
+                          <span className="block text-[12.5px] font-semibold font-mono text-red-400">−{parseFloat(p.amount_ltc).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} <span className="text-[10px] text-red-600">LTC</span></span>
+                          {p.fee_ltc > 0 && <span className="block text-[10px] text-[#334155] font-mono">fee {parseFloat(p.fee_ltc).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} LTC</span>}
+                        </span>
+                        <span className="flex-shrink-0 hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border text-emerald-400 bg-emerald-500/10 border-emerald-500/20">{p.status}</span>
+                        <span className="hidden md:block flex-shrink-0 text-[10.5px] text-[#1e3a5f] font-mono w-16 text-right">{sentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className={`flex-shrink-0 text-[#1e3a5f] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-5 pt-4 pb-5 bg-[#040c1a]/50 border-t border-white/[0.04]" style={{ animation: 'cf-slide-up 0.18s cubic-bezier(0.16,1,0.3,1) both' }}>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                            {p.tx_hash && (
+                              <div className="sm:col-span-2">
+                                <p className="text-[9.5px] font-semibold text-[#334155] uppercase tracking-[0.1em] mb-1">Transaction Hash</p>
+                                <a href={`/explorer/litecoin/tx/${p.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-mono text-blue-400 hover:text-blue-300 underline underline-offset-2 break-all transition-colors">{p.tx_hash}</a>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-[9.5px] font-semibold text-[#334155] uppercase tracking-[0.1em] mb-1">To Address</p>
+                              <span className="text-[11.5px] font-mono text-[#94a3b8] break-all">{p.to_address}</span>
+                            </div>
+                            <div>
+                              <p className="text-[9.5px] font-semibold text-[#334155] uppercase tracking-[0.1em] mb-1">Amount / Fee</p>
+                              <p className="text-[12px] font-mono text-[#475569]">
+                                <span className="text-red-400">{parseFloat(p.amount_ltc).toFixed(8)} LTC</span>
+                                {p.fee_ltc > 0 && <span className="text-[#334155]"> · fee {parseFloat(p.fee_ltc).toFixed(8)} LTC</span>}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[9.5px] font-semibold text-[#334155] uppercase tracking-[0.1em] mb-1">Sent At</p>
+                              <p className="text-[11.5px] font-mono text-[#475569]">
+                                {sentDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[9.5px] font-semibold text-[#334155] uppercase tracking-[0.1em] mb-1">Status</p>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-wider border text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                {p.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {totalPages > 1 && (
+                <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between gap-3">
+                  <p className="text-[11px] text-[#334155] font-mono">{filtered.length} payout{filtered.length !== 1 ? 's' : ''}{q ? ' found' : ''} · page {page}/{totalPages}</p>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => setPayPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11.5px] text-[#4a5568] hover:text-[#94a3b8] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1).reduce((acc, n, i, arr) => {
+                      if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                      acc.push(n);
+                      return acc;
+                    }, []).map((n, i) => n === '…' ? (
+                      <span key={`ellipsis-${i}`} className="text-[11px] text-[#334155] px-1">…</span>
+                    ) : (
+                      <button key={n} onClick={() => setPayPage(n)} className={`min-w-[26px] px-2 py-1 rounded-lg text-[11.5px] font-mono border transition-all ${n === page ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' : 'bg-white/[0.03] border-white/[0.06] text-[#4a5568] hover:text-[#94a3b8]'}`}>{n}</button>
+                    ))}
+                    <button onClick={() => setPayPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11.5px] text-[#4a5568] hover:text-[#94a3b8] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

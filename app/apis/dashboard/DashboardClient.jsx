@@ -243,6 +243,9 @@ function PaymentsTab({ apiKey }) {
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [expandedInv, setExpandedInv] = useState(null);
   const [copiedInv, setCopiedInv] = useState(null);
+  const [invSearch, setInvSearch] = useState('');
+  const [invPage, setInvPage] = useState(1);
+  const INV_PAGE_SIZE = 10;
 
   const [payAddress, setPayAddress] = useState('');
   const [payAmount, setPayAmount] = useState('');
@@ -417,6 +420,26 @@ function PaymentsTab({ apiKey }) {
           </button>
         </div>
 
+        {invoices && invoices.length > 0 && (
+          <div className="px-5 pt-3 pb-2.5 border-b border-white/[0.04]">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#334155] pointer-events-none" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                value={invSearch}
+                onChange={(e) => { setInvSearch(e.target.value); setInvPage(1); }}
+                placeholder="Search by ID, description, address, status…"
+                className="w-full pl-8 pr-8 py-2 rounded-lg bg-[#040c1a] border border-white/[0.07] text-[12.5px] text-[#e2e8f0] placeholder-[#2d3748] focus:outline-none focus:border-blue-500/30 transition-colors font-mono"
+              />
+              {invSearch && (
+                <button onClick={() => { setInvSearch(''); setInvPage(1); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#334155] hover:text-[#94a3b8] transition-colors">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {invoicesLoading && !invoices && (
           <div className="px-6 py-10 flex justify-center">
             <div className="w-5 h-5 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
@@ -433,9 +456,27 @@ function PaymentsTab({ apiKey }) {
           </div>
         )}
 
-        {invoices && invoices.length > 0 && (
+        {invoices && invoices.length > 0 && (() => {
+          const q = invSearch.trim().toLowerCase();
+          const filtered = q ? invoices.filter(inv =>
+            inv.id.toLowerCase().includes(q) ||
+            (inv.description || '').toLowerCase().includes(q) ||
+            (inv.ltc_address || '').toLowerCase().includes(q) ||
+            (inv.status || '').toLowerCase().includes(q) ||
+            (inv.tx_hash || '').toLowerCase().includes(q)
+          ) : invoices;
+          const totalPages = Math.max(1, Math.ceil(filtered.length / INV_PAGE_SIZE));
+          const page = Math.min(invPage, totalPages);
+          const pageItems = filtered.slice((page - 1) * INV_PAGE_SIZE, page * INV_PAGE_SIZE);
+          return (
+            <>
           <div className="divide-y divide-white/[0.04]">
-            {invoices.map((inv, idx) => {
+            {filtered.length === 0 && (
+              <div className="px-6 py-10 text-center">
+                <p className="text-[12.5px] text-[#334155] font-mono">no results for &ldquo;{invSearch}&rdquo;</p>
+              </div>
+            )}
+            {pageItems.map((inv, idx) => {
               const cfg = INV_STATUS[inv.status] || INV_STATUS.pending;
               const isOpen = expandedInv === inv.id;
               const createdDate = new Date(inv.created_at);
@@ -520,7 +561,31 @@ function PaymentsTab({ apiKey }) {
               );
             })}
           </div>
-        )}
+          {totalPages > 1 && (
+            <div className="px-5 py-3 border-t border-white/[0.04] flex items-center justify-between gap-3">
+              <p className="text-[11px] text-[#334155] font-mono">{filtered.length} invoice{filtered.length !== 1 ? 's' : ''}{q ? ' found' : ''} · page {page}/{totalPages}</p>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setInvPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11.5px] text-[#4a5568] hover:text-[#94a3b8] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1).reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                  acc.push(n);
+                  return acc;
+                }, []).map((n, i) => n === '…' ? (
+                  <span key={`ellipsis-${i}`} className="text-[11px] text-[#334155] px-1">…</span>
+                ) : (
+                  <button key={n} onClick={() => setInvPage(n)} className={`min-w-[26px] px-2 py-1 rounded-lg text-[11.5px] font-mono border transition-all ${n === page ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' : 'bg-white/[0.03] border-white/[0.06] text-[#4a5568] hover:text-[#94a3b8]'}`}>{n}</button>
+                ))}
+                <button onClick={() => setInvPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11.5px] text-[#4a5568] hover:text-[#94a3b8] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              </div>
+            </div>
+          )}
+            </>
+          );
+        })()}
       </div>
 
       {/* ── Send Payout ── */}

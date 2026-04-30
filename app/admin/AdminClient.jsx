@@ -48,6 +48,7 @@ export default function AdminClient() {
   const [withdrawAddr, setWithdrawAddr]       = useState('');
   const [withdrawAmount, setWithdrawAmount]   = useState('');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawResult, setWithdrawResult]   = useState(null);
   const [ltcPrice, setLtcPrice] = useState(null);
 
   const LIMIT = 25;

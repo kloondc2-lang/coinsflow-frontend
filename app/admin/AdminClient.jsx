@@ -7,11 +7,12 @@ import { supabase } from '../lib/supabase';
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.coinsflow.net';
 const ADMIN_EMAIL = 'mra88811@gmail.com';
 
-function StatCard({ label, value, color }) {
+function StatCard({ label, value, sub, color }) {
   return (
     <div className="p-5 rounded-xl border border-white/[0.07] bg-[#020d1c]">
       <p className="text-[10.5px] font-semibold text-[#334155] uppercase tracking-widest mb-2">{label}</p>
-      <p className={`text-[30px] font-extrabold tracking-tight ${color || 'text-white'}`}>{value ?? '—'}</p>
+      <p className={`text-[28px] font-extrabold tracking-tight leading-none ${color || 'text-white'}`}>{value ?? '—'}</p>
+      {sub && <p className="text-[12px] text-[#4a5568] mt-1.5 font-medium">{sub}</p>}
     </div>
   );
 }
@@ -49,6 +50,8 @@ export default function AdminClient() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawResult, setWithdrawResult]   = useState(null); // { ok, tx_hash } or { error }
 
+  const [ltcPrice, setLtcPrice] = useState(null);
+
   const LIMIT = 25;
 
   // ── Auth check ────────────────────────────────────────────────────────────
@@ -65,6 +68,17 @@ export default function AdminClient() {
       setLoading(false);
     });
   }, [router]);
+
+  // ── Fetch LTC price ───────────────────────────────────────────────────────
+  const fetchPrice = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/v1/price/ltc`);
+      if (res.ok) {
+        const data = await res.json();
+        setLtcPrice(parseFloat(data.price_usd) || null);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   // ── Fetch stats ───────────────────────────────────────────────────────────
   const fetchStats = useCallback(async (tok) => {
@@ -96,7 +110,8 @@ export default function AdminClient() {
     if (!token) return;
     fetchStats(token);
     fetchKeys(token, page, search);
-  }, [token, page, search, fetchStats, fetchKeys]);
+    fetchPrice();
+  }, [token, page, search, fetchStats, fetchKeys, fetchPrice]);
 
   // ── Revoke / activate / delete ────────────────────────────────────────────
   async function revokeKey(id) {
@@ -213,16 +228,19 @@ export default function AdminClient() {
           <StatCard
             label="Total Volume Processed"
             value={stats ? `${parseFloat(stats.totalVolumeProcessed ?? 0).toFixed(8)} LTC` : '—'}
+            sub={stats && ltcPrice ? `≈ $${(parseFloat(stats.totalVolumeProcessed ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : undefined}
             color="text-white"
           />
           <StatCard
             label="Total Service Fees Collected"
             value={stats ? `${parseFloat(stats.totalServiceFeesLTC ?? 0).toFixed(8)} LTC` : '—'}
+            sub={stats && ltcPrice ? `≈ $${(parseFloat(stats.totalServiceFeesLTC ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : undefined}
             color="text-yellow-400"
           />
           <StatCard
             label="Available to Withdraw"
             value={stats ? `${parseFloat(stats.availableFeesLTC ?? 0).toFixed(8)} LTC` : '—'}
+            sub={stats && ltcPrice ? `≈ $${(parseFloat(stats.availableFeesLTC ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : undefined}
             color="text-emerald-400"
           />
         </div>
@@ -237,6 +255,11 @@ export default function AdminClient() {
               <span className="font-mono text-emerald-400 font-semibold">
                 {stats ? `${parseFloat(stats.availableFeesLTC ?? 0).toFixed(8)} LTC` : '…'}
               </span>
+              {stats && ltcPrice && (
+                <span className="ml-1.5 text-[#64748b]">
+                  (≈ ${(parseFloat(stats.availableFeesLTC ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)
+                </span>
+              )}
               {stats && (
                 <span className="ml-3 text-[#334155]">
                   (wallet {parseFloat(stats.walletBalanceLTC ?? 0).toFixed(8)} LTC &minus; user balances {parseFloat(stats.totalUserBalancesLTC ?? 0).toFixed(8)} LTC)

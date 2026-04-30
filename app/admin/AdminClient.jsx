@@ -48,8 +48,6 @@ export default function AdminClient() {
   const [withdrawAddr, setWithdrawAddr]       = useState('');
   const [withdrawAmount, setWithdrawAmount]   = useState('');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
-  const [withdrawResult, setWithdrawResult]   = useState(null); // { ok, tx_hash } or { error }
-
   const [ltcPrice, setLtcPrice] = useState(null);
 
   const LIMIT = 25;
@@ -69,24 +67,17 @@ export default function AdminClient() {
     });
   }, [router]);
 
-  // ── Fetch LTC price ───────────────────────────────────────────────────────
-  const fetchPrice = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/v1/price/ltc`);
-      if (res.ok) {
-        const data = await res.json();
-        setLtcPrice(parseFloat(data.price_usd) || null);
-      }
-    } catch { /* ignore */ }
-  }, []);
-
   // ── Fetch stats ───────────────────────────────────────────────────────────
   const fetchStats = useCallback(async (tok) => {
     try {
       const res = await fetch(`${API}/admin/stats`, {
         headers: { Authorization: `Bearer ${tok}` },
       });
-      if (res.ok) setStats(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+        if (data.ltcPriceUSD) setLtcPrice(data.ltcPriceUSD);
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -110,8 +101,7 @@ export default function AdminClient() {
     if (!token) return;
     fetchStats(token);
     fetchKeys(token, page, search);
-    fetchPrice();
-  }, [token, page, search, fetchStats, fetchKeys, fetchPrice]);
+  }, [token, page, search, fetchStats, fetchKeys]);
 
   // ── Revoke / activate / delete ────────────────────────────────────────────
   async function revokeKey(id) {

@@ -43,6 +43,12 @@ export default function AdminClient() {
   const [actionLoading, setActionLoading] = useState({});
   const [error, setError]     = useState('');
 
+  // Withdraw state
+  const [withdrawAddr, setWithdrawAddr]       = useState('');
+  const [withdrawAmount, setWithdrawAmount]   = useState('');
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawResult, setWithdrawResult]   = useState(null); // { ok, tx_hash } or { error }
+
   const LIMIT = 25;
 
   // ── Auth check ────────────────────────────────────────────────────────────
@@ -137,6 +143,29 @@ export default function AdminClient() {
     } finally { setActionLoading((p) => ({ ...p, [id]: false })); }
   }
 
+  async function submitWithdraw(e) {
+    e.preventDefault();
+    setWithdrawResult(null);
+    const amount = parseFloat(withdrawAmount);
+    if (!withdrawAddr.trim() || isNaN(amount) || amount <= 0) return;
+    setWithdrawLoading(true);
+    try {
+      const res = await fetch(`${API}/admin/withdraw`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_address: withdrawAddr.trim(), amount_ltc: amount }),
+      });
+      const data = await res.json();
+      setWithdrawResult(data);
+      if (data.ok) {
+        setWithdrawAddr('');
+        setWithdrawAmount('');
+        fetchStats(token);
+      }
+    } catch { setWithdrawResult({ error: 'Network error' }); }
+    finally { setWithdrawLoading(false); }
+  }
+
   function handleSearch(e) {
     e.preventDefault();
     setSearch(searchInput);
@@ -171,12 +200,95 @@ export default function AdminClient() {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        {/* Platform key stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <StatCard label="Total Keys"   value={stats?.totalKeys}   />
           <StatCard label="Active Keys"  value={stats?.activeKeys}  color="text-emerald-400" />
           <StatCard label="Revoked Keys" value={stats?.revokedKeys} color="text-red-400" />
           <StatCard label="Total Users"  value={stats?.totalUsers}  color="text-blue-400" />
+        </div>
+
+        {/* Financial stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+          <StatCard
+            label="Total Volume Processed"
+            value={stats ? `${parseFloat(stats.totalVolumeProcessed ?? 0).toFixed(8)} LTC` : '—'}
+            color="text-white"
+          />
+          <StatCard
+            label="Total Service Fees Collected"
+            value={stats ? `${parseFloat(stats.totalServiceFeesLTC ?? 0).toFixed(8)} LTC` : '—'}
+            color="text-yellow-400"
+          />
+          <StatCard
+            label="Available to Withdraw"
+            value={stats ? `${parseFloat(stats.availableFeesLTC ?? 0).toFixed(8)} LTC` : '—'}
+            color="text-emerald-400"
+          />
+        </div>
+
+        {/* Fee withdrawal panel */}
+        <div className="rounded-xl border border-white/[0.07] bg-[#0a1628] p-6 mb-8">
+          <div className="mb-4">
+            <h2 className="text-[15px] font-bold text-white">Withdraw Platform Fees</h2>
+            <p className="text-[12px] text-[#4a5568] mt-0.5">
+              Withdraw collected service fees from the platform Litecoin wallet.
+              Available:{' '}
+              <span className="font-mono text-emerald-400 font-semibold">
+                {stats ? `${parseFloat(stats.availableFeesLTC ?? 0).toFixed(8)} LTC` : '…'}
+              </span>
+              {stats && (
+                <span className="ml-3 text-[#334155]">
+                  (wallet {parseFloat(stats.walletBalanceLTC ?? 0).toFixed(8)} LTC &minus; user balances {parseFloat(stats.totalUserBalancesLTC ?? 0).toFixed(8)} LTC)
+                </span>
+              )}
+            </p>
+          </div>
+          <form onSubmit={submitWithdraw} className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={withdrawAddr}
+              onChange={(e) => setWithdrawAddr(e.target.value)}
+              placeholder="LTC address (L…, M…, or ltc1…)"
+              required
+              className="flex-[2] px-3 py-2 rounded-lg border border-white/[0.08] bg-[#040c1a] text-[13px] text-[#e2e8f0] placeholder-[#334155] outline-none focus:border-blue-500/50"
+            />
+            <input
+              type="number"
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              placeholder="Amount LTC"
+              min="0.00001"
+              step="any"
+              required
+              className="flex-1 px-3 py-2 rounded-lg border border-white/[0.08] bg-[#040c1a] text-[13px] text-[#e2e8f0] placeholder-[#334155] outline-none focus:border-blue-500/50"
+            />
+            <button
+              type="button"
+              onClick={() => stats && setWithdrawAmount(parseFloat(stats.availableFeesLTC ?? 0).toFixed(8))}
+              className="px-3 py-2 rounded-lg border border-white/[0.08] text-[12px] text-[#4a5568] hover:text-[#94a3b8] transition-colors whitespace-nowrap"
+            >
+              All
+            </button>
+            <button
+              type="submit"
+              disabled={withdrawLoading || !withdrawAddr.trim() || !withdrawAmount}
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-semibold transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {withdrawLoading ? 'Sending…' : 'Withdraw'}
+            </button>
+          </form>
+          {withdrawResult && (
+            <div className={`mt-3 px-4 py-3 rounded-lg text-[12.5px] font-mono ${
+              withdrawResult.ok
+                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            }`}>
+              {withdrawResult.ok
+                ? `✓ Sent ${withdrawResult.amount_ltc} LTC to ${withdrawResult.to_address} — tx: ${withdrawResult.tx_hash}`
+                : `✗ ${withdrawResult.error}`}
+            </div>
+          )}
         </div>
 
         {/* Search + table */}

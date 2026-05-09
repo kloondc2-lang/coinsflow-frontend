@@ -231,14 +231,8 @@ export default function AdminClient() {
           <StatCard
             label="Available to Withdraw"
             value={stats ? `${parseFloat(stats.availableFeesLTC ?? 0).toFixed(8)} LTC` : '—'}
-            sub={
-              stats
-                ? stats.walletDeficit
-                  ? `⚠ Wallet deficit — user balances exceed wallet by ${Math.abs(parseFloat(stats.availableFeesLTC ?? 0)).toFixed(8)} LTC`
-                  : (ltcPrice ? `≈ $${(parseFloat(stats.availableFeesLTC ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : undefined)
-                : undefined
-            }
-            color={stats?.walletDeficit ? 'text-red-400' : 'text-emerald-400'}
+            sub={stats && ltcPrice ? `≈ $${(parseFloat(stats.availableFeesLTC ?? 0) * ltcPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : undefined}
+            color="text-emerald-400"
           />
         </div>
 
@@ -246,11 +240,6 @@ export default function AdminClient() {
         <div className="rounded-xl border border-white/[0.07] bg-[#0a1628] p-6 mb-8">
           <div className="mb-4">
             <h2 className="text-[15px] font-bold text-white">Withdraw Platform Fees</h2>
-            {stats?.walletDeficit && (
-              <div className="mt-2 mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-[12px] text-red-400">
-                ⚠ Wallet deficit: user balances ({parseFloat(stats.totalUserBalancesLTC ?? 0).toFixed(8)} LTC) exceed wallet ({parseFloat(stats.walletBalanceLTC ?? 0).toFixed(8)} LTC) by {Math.abs(parseFloat(stats.availableFeesLTC ?? 0)).toFixed(8)} LTC. This is from historical overcrediting. No platform fees are available until payouts drain the inflated balances.
-              </div>
-            )}
             <p className="text-[12px] text-[#4a5568] mt-0.5">
               Withdraw collected service fees from the platform Litecoin wallet.
               Available:{' '}

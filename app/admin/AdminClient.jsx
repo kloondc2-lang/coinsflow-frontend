@@ -51,6 +51,12 @@ export default function AdminClient() {
   const [withdrawResult, setWithdrawResult]   = useState(null);
   const [ltcPrice, setLtcPrice] = useState(null);
 
+  // Payouts history state
+  const [payouts, setPayouts]           = useState([]);
+  const [payoutsTotal, setPayoutsTotal] = useState(0);
+  const [payoutsPage, setPayoutsPage]   = useState(1);
+  const PAYOUTS_LIMIT = 25;
+
   const LIMIT = 25;
 
   // ── Auth check ────────────────────────────────────────────────────────────
@@ -98,11 +104,26 @@ export default function AdminClient() {
     } catch { /* ignore */ }
   }, []);
 
+  const fetchPayouts = useCallback(async (tok, pg) => {
+    try {
+      const params = new URLSearchParams({ page: pg, limit: PAYOUTS_LIMIT });
+      const res = await fetch(`${API}/admin/payouts?${params}`, {
+        headers: { Authorization: `Bearer ${tok}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPayouts(data.payouts || []);
+        setPayoutsTotal(data.total || 0);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => {
     if (!token) return;
     fetchStats(token);
     fetchKeys(token, page, search);
-  }, [token, page, search, fetchStats, fetchKeys]);
+    fetchPayouts(token, payoutsPage);
+  }, [token, page, search, payoutsPage, fetchStats, fetchKeys, fetchPayouts]);
 
   // ── Revoke / activate / delete ────────────────────────────────────────────
   async function revokeKey(id) {
@@ -425,6 +446,86 @@ export default function AdminClient() {
         </div>
 
         {error && <p className="mt-4 text-[13px] text-red-400">{error}</p>}
+
+        {/* Payouts History */}
+        <div className="rounded-xl border border-white/[0.07] bg-[#0a1628] overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b border-white/[0.06]">
+            <p className="text-[13px] font-semibold text-[#e2e8f0]">
+              Payout History <span className="ml-1.5 text-[#334155]">({payoutsTotal})</span>
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[900px]">
+              <thead>
+                <tr className="bg-[#071423]">
+                  {['Date', 'User', 'To Address', 'Amount', 'Service Fee', 'Network Fee', 'TX Hash', 'Status'].map((h) => (
+                    <th key={h} className="px-4 py-2.5 text-[10.5px] font-semibold text-[#334155] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {payouts.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-[13px] text-[#334155]">No payouts found.</td>
+                  </tr>
+                )}
+                {payouts.map((p) => (
+                  <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3 text-[12px] text-[#4a5568] whitespace-nowrap">
+                      {p.created_at ? new Date(p.created_at).toLocaleString() : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-[12px] text-[#94a3b8] max-w-[150px] truncate" title={p.email}>{p.email}</td>
+                    <td className="px-4 py-3">
+                      <code className="text-[11px] font-mono text-[#4a5568]" title={p.to_address}>
+                        {p.to_address ? `${p.to_address.slice(0, 8)}…${p.to_address.slice(-6)}` : '—'}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 text-[13px] font-mono text-white whitespace-nowrap">
+                      {parseFloat(p.amount_ltc || 0).toFixed(8)}
+                    </td>
+                    <td className="px-4 py-3 text-[12px] font-mono text-yellow-400 whitespace-nowrap">
+                      {parseFloat(p.service_fee_ltc || 0).toFixed(8)}
+                    </td>
+                    <td className="px-4 py-3 text-[12px] font-mono text-[#4a5568] whitespace-nowrap">
+                      {parseFloat(p.fee_ltc || 0).toFixed(8)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <code className="text-[11px] font-mono text-[#4a5568]" title={p.tx_hash}>
+                        {p.tx_hash ? `${p.tx_hash.slice(0, 8)}…${p.tx_hash.slice(-6)}` : '—'}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[11px] font-bold ${
+                        p.status === 'sent' ? 'text-emerald-400' : 'text-yellow-400'
+                      }`}>{p.status || '—'}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {Math.ceil(payoutsTotal / PAYOUTS_LIMIT) > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.06]">
+              <p className="text-[12px] text-[#334155]">
+                Showing {((payoutsPage - 1) * PAYOUTS_LIMIT) + 1}–{Math.min(payoutsPage * PAYOUTS_LIMIT, payoutsTotal)} of {payoutsTotal}
+              </p>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setPayoutsPage((p) => Math.max(1, p - 1))}
+                  disabled={payoutsPage === 1}
+                  className="px-3 py-1 text-[12px] font-semibold text-[#4a5568] border border-white/[0.08] rounded-md hover:text-[#94a3b8] disabled:opacity-30 transition-colors"
+                >Prev</button>
+                <span className="px-3 py-1 text-[12px] text-[#4a5568]">{payoutsPage} / {Math.ceil(payoutsTotal / PAYOUTS_LIMIT)}</span>
+                <button
+                  onClick={() => setPayoutsPage((p) => Math.min(Math.ceil(payoutsTotal / PAYOUTS_LIMIT), p + 1))}
+                  disabled={payoutsPage >= Math.ceil(payoutsTotal / PAYOUTS_LIMIT)}
+                  className="px-3 py-1 text-[12px] font-semibold text-[#4a5568] border border-white/[0.08] rounded-md hover:text-[#94a3b8] disabled:opacity-30 transition-colors"
+                >Next</button>
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
